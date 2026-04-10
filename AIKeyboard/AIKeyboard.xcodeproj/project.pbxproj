@@ -1,0 +1,456 @@
+// !$*UTF8*$!
+{
+	objectVersion = 56;
+	archiveVersion = 1;
+	classes = {
+	};
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* AIKeyboardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* AIKeyboardApp.swift */; };
+		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ContentView.swift */; };
+		A10000000000000000000003 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* KeyboardViewController.swift */; };
+		A10000000000000000000004 /* AIKeyboardExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* AIKeyboardExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A10000000000000000000005 /* TextContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* TextContext.swift */; };
+		A10000000000000000000006 /* SentenceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* SentenceExtractor.swift */; };
+		A10000000000000000000007 /* DiffRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* DiffRenderer.swift */; };
+		A10000000000000000000008 /* CorrectionSuggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* CorrectionSuggestion.swift */; };
+		A10000000000000000000009 /* SimpleCorrectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001A /* SimpleCorrectionEngine.swift */; };
+		A1000000000000000000000A /* TextContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* TextContext.swift */; };
+		A1000000000000000000000B /* SentenceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* SentenceExtractor.swift */; };
+		A1000000000000000000000C /* DiffRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* DiffRenderer.swift */; };
+		A1000000000000000000000D /* CorrectionSuggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* CorrectionSuggestion.swift */; };
+		A1000000000000000000000E /* SimpleCorrectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001A /* SimpleCorrectionEngine.swift */; };
+		A1000000000000000000000F /* KeyboardPreviewViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001B /* KeyboardPreviewViewState.swift */; };
+		A10000000000000000000010 /* KeyboardTextActionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001C /* KeyboardTextActionService.swift */; };
+		A1000000000000000000001E /* KeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001D /* KeyboardLayout.swift */; };
+		A1000000000000000000001F /* KeyboardState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* KeyboardState.swift */; };
+		A10000000000000000000023 /* KeyboardSessionMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* KeyboardSessionMemory.swift */; };
+		A10000000000000000000025 /* SentenceReplacementPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* SentenceReplacementPlanner.swift */; };
+		A10000000000000000000027 /* SentenceReplacementPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* SentenceReplacementPlanner.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000031 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000040 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000201;
+			remoteInfo = AIKeyboardExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A10000000000000000000051 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A10000000000000000000004 /* AIKeyboardExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A10000000000000000000011 /* AIKeyboardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIKeyboardApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A10000000000000000000013 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		A10000000000000000000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000016 /* TextContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TextContext.swift; path = Sources/AIKeyboardCore/TextContext.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000017 /* SentenceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SentenceExtractor.swift; path = Sources/AIKeyboardCore/SentenceExtractor.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000018 /* DiffRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiffRenderer.swift; path = Sources/AIKeyboardCore/DiffRenderer.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000019 /* CorrectionSuggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CorrectionSuggestion.swift; path = Sources/AIKeyboardCore/CorrectionSuggestion.swift; sourceTree = SOURCE_ROOT; };
+		A1000000000000000000001A /* SimpleCorrectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SimpleCorrectionEngine.swift; path = Sources/AIKeyboardCore/SimpleCorrectionEngine.swift; sourceTree = SOURCE_ROOT; };
+		A1000000000000000000001B /* KeyboardPreviewViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardPreviewViewState.swift; sourceTree = "<group>"; };
+		A1000000000000000000001C /* KeyboardTextActionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTextActionService.swift; sourceTree = "<group>"; };
+		A1000000000000000000001D /* KeyboardLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayout.swift; sourceTree = "<group>"; };
+		A10000000000000000000020 /* KeyboardState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardState.swift; sourceTree = "<group>"; };
+		A10000000000000000000024 /* KeyboardSessionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSessionMemory.swift; sourceTree = "<group>"; };
+		A10000000000000000000026 /* SentenceReplacementPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SentenceReplacementPlanner.swift; path = Sources/AIKeyboardCore/SentenceReplacementPlanner.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000021 /* AIKeyboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIKeyboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000022 /* AIKeyboardExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AIKeyboardExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000000000000000000061 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000062 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000000000000000000070 = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000071 /* App */,
+				A10000000000000000000072 /* KeyboardExtension */,
+				A10000000000000000000074 /* AIKeyboardCore */,
+				A10000000000000000000073 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000000000000000000071 /* App */ = {
+			isa = PBXGroup;
+			path = App;
+			sourceTree = "<group>";
+			children = (
+				A10000000000000000000011 /* AIKeyboardApp.swift */,
+				A10000000000000000000012 /* ContentView.swift */,
+				A10000000000000000000014 /* Info.plist */,
+			);
+		};
+		A10000000000000000000072 /* KeyboardExtension */ = {
+			isa = PBXGroup;
+			path = KeyboardExtension;
+			sourceTree = "<group>";
+			children = (
+				A10000000000000000000013 /* KeyboardViewController.swift */,
+				A1000000000000000000001B /* KeyboardPreviewViewState.swift */,
+				A1000000000000000000001C /* KeyboardTextActionService.swift */,
+				A1000000000000000000001D /* KeyboardLayout.swift */,
+				A10000000000000000000020 /* KeyboardState.swift */,
+				A10000000000000000000024 /* KeyboardSessionMemory.swift */,
+				A10000000000000000000015 /* Info.plist */,
+			);
+		};
+		A10000000000000000000073 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000021 /* AIKeyboard.app */,
+				A10000000000000000000022 /* AIKeyboardExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000074 /* AIKeyboardCore */ = {
+			isa = PBXGroup;
+			name = AIKeyboardCore;
+			sourceTree = "<group>";
+			children = (
+				A10000000000000000000016 /* TextContext.swift */,
+				A10000000000000000000017 /* SentenceExtractor.swift */,
+				A10000000000000000000018 /* DiffRenderer.swift */,
+				A10000000000000000000026 /* SentenceReplacementPlanner.swift */,
+				A10000000000000000000019 /* CorrectionSuggestion.swift */,
+				A1000000000000000000001A /* SimpleCorrectionEngine.swift */,
+			);
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000000000000000000200 /* AIKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000080 /* Build configuration list for PBXNativeTarget "AIKeyboard" */;
+			buildPhases = (
+				A10000000000000000000090 /* Sources */,
+				A10000000000000000000061 /* Frameworks */,
+				A10000000000000000000091 /* Resources */,
+				A10000000000000000000051 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A100000000000000000000A1 /* PBXTargetDependency */,
+			);
+			name = AIKeyboard;
+			productName = AIKeyboard;
+			productReference = A10000000000000000000021 /* AIKeyboard.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A10000000000000000000201 /* AIKeyboardExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000081 /* Build configuration list for PBXNativeTarget "AIKeyboardExtension" */;
+			buildPhases = (
+				A10000000000000000000092 /* Sources */,
+				A10000000000000000000062 /* Frameworks */,
+				A10000000000000000000093 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AIKeyboardExtension;
+			productName = AIKeyboardExtension;
+			productReference = A10000000000000000000022 /* AIKeyboardExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A10000000000000000000040 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A10000000000000000000200 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A10000000000000000000201 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = A10000000000000000000082 /* Build configuration list for PBXProject "AIKeyboard" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000000000000000000070;
+			productRefGroup = A10000000000000000000073 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000000000000000000200 /* AIKeyboard */,
+				A10000000000000000000201 /* AIKeyboardExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A10000000000000000000091 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000093 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A10000000000000000000090 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* AIKeyboardApp.swift in Sources */,
+				A10000000000000000000002 /* ContentView.swift in Sources */,
+				A10000000000000000000005 /* TextContext.swift in Sources */,
+				A10000000000000000000006 /* SentenceExtractor.swift in Sources */,
+				A10000000000000000000007 /* DiffRenderer.swift in Sources */,
+				A10000000000000000000025 /* SentenceReplacementPlanner.swift in Sources */,
+				A10000000000000000000008 /* CorrectionSuggestion.swift in Sources */,
+				A10000000000000000000009 /* SimpleCorrectionEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000003 /* KeyboardViewController.swift in Sources */,
+				A1000000000000000000000F /* KeyboardPreviewViewState.swift in Sources */,
+				A10000000000000000000010 /* KeyboardTextActionService.swift in Sources */,
+				A1000000000000000000001E /* KeyboardLayout.swift in Sources */,
+				A1000000000000000000001F /* KeyboardState.swift in Sources */,
+				A10000000000000000000023 /* KeyboardSessionMemory.swift in Sources */,
+				A1000000000000000000000A /* TextContext.swift in Sources */,
+				A1000000000000000000000B /* SentenceExtractor.swift in Sources */,
+				A1000000000000000000000C /* DiffRenderer.swift in Sources */,
+				A10000000000000000000027 /* SentenceReplacementPlanner.swift in Sources */,
+				A1000000000000000000000D /* CorrectionSuggestion.swift in Sources */,
+				A1000000000000000000000E /* SimpleCorrectionEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A100000000000000000000A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000201 /* AIKeyboardExtension */;
+			targetProxy = A10000000000000000000031 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A100000000000000000000B1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A100000000000000000000B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A100000000000000000000B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inci.AIKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A100000000000000000000B4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inci.AIKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		A100000000000000000000B5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeyboardExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inci.AIKeyboard.KeyboardExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A100000000000000000000B6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeyboardExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inci.AIKeyboard.KeyboardExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10000000000000000000080 /* Build configuration list for PBXNativeTarget "AIKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000000B3 /* Debug */,
+				A100000000000000000000B4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000081 /* Build configuration list for PBXNativeTarget "AIKeyboardExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000000B5 /* Debug */,
+				A100000000000000000000B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000000000000000000082 /* Build configuration list for PBXProject "AIKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000000B1 /* Debug */,
+				A100000000000000000000B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A10000000000000000000040 /* Project object */;
+}
