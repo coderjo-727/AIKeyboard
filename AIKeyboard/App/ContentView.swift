@@ -1,18 +1,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    private let analysis = SimpleCorrectionEngine.analyze(
-        context: TextContext(
-            beforeInput: "hey there. i has a apple",
-            afterInput: ""
-        )
-    )
+    @State private var state = CorrectionExperienceState.loading
+    @State private var didStartLoading = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     heroCard
+                    runtimeCard
                     enablementCard
                     sentencePreviewCard
                     card(
@@ -20,8 +17,8 @@ struct ContentView: View {
                         body: "The keyboard stays intentionally quiet. It only surfaces conservative suggestions, keeps review inside the keyboard, and treats rejection as a signal instead of pushing harder."
                     )
                     card(
-                        title: "Current MVP Boundary",
-                        body: "This build focuses on sentence extraction, visible diffs, safe apply behavior, and session-only memory. It is still a local-first prototype, not a production keyboard yet."
+                        title: "Current Alpha Boundary",
+                        body: "This build now covers sentence extraction, visible diffs, safe apply behavior, session-only memory, and relay-ready runtime selection. It is an early working alpha, not a throwaway mockup."
                     )
                 }
                 .padding(24)
@@ -40,15 +37,20 @@ struct ContentView: View {
                 .ignoresSafeArea()
             )
         }
+        .task {
+            guard !didStartLoading else { return }
+            didStartLoading = true
+            await loadCorrectionExperience()
+        }
     }
 
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Private writing help that waits for permission.")
+            Text("Private writing help that behaves like a product.")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundStyle(Color(red: 0.10, green: 0.18, blue: 0.14))
 
-            Text("Sentence-scoped spelling, grammar, and punctuation correction with visible diffs and explicit review before anything changes.")
+            Text("Sentence-scoped spelling, grammar, and punctuation correction with visible diffs, explicit review, and a runtime that can step up to a relay-backed provider when configured.")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(.secondary)
 
@@ -73,6 +75,31 @@ struct ContentView: View {
         )
     }
 
+    private var runtimeCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Correction Runtime")
+                .font(.headline)
+
+            Text(state.runtimeHeadline)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color(red: 0.10, green: 0.18, blue: 0.14))
+
+            Text(state.runtimeBody)
+                .foregroundStyle(.secondary)
+
+            if !state.setupSteps.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(state.setupSteps.enumerated()), id: \.offset) { index, step in
+                        stepRow(number: "\(index + 1)", text: step)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 24))
+    }
+
     private var enablementCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Enable On Device")
@@ -84,7 +111,8 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 8) {
                 stepRow(number: "1", text: "Run the AIKeyboard app target on a physical iPhone or iPad.")
                 stepRow(number: "2", text: "Open Keyboard settings and add AIKeyboard.")
-                stepRow(number: "3", text: "Switch to AIKeyboard in Notes or Messages and test a sentence like i has a apple.")
+                stepRow(number: "3", text: "If you want relay-backed corrections inside the keyboard, enable Full Access for AIKeyboard.")
+                stepRow(number: "4", text: "Switch to AIKeyboard in Notes or Messages and test a sentence like i has a apple.")
             }
         }
         .padding(20)
@@ -94,27 +122,27 @@ struct ContentView: View {
 
     private var sentencePreviewCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Shared Core Demo")
+            Text("Live Correction Snapshot")
                 .font(.headline)
 
             Text("Active sentence")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(analysis.activeSentence.text)
+            Text(state.analysis.activeSentence.text)
                 .font(.body.monospaced())
 
             Text("Suggested correction")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(analysis.suggestion?.corrected ?? "No correction surfaced")
+            Text(state.analysis.suggestion?.corrected ?? "No correction surfaced")
                 .font(.body.monospaced())
 
-            if !analysis.diff.isEmpty {
+            if !state.analysis.diff.isEmpty {
                 Text("Diff summary")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                ForEach(Array(analysis.diff.enumerated()), id: \.offset) { _, segment in
+                ForEach(Array(state.analysis.diff.enumerated()), id: \.offset) { _, segment in
                     if segment.kind != .unchanged {
                         HStack(alignment: .top, spacing: 10) {
                             Text(segment.kind.rawValue.capitalized)
@@ -171,5 +199,78 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    @MainActor
+    private func loadCorrectionExperience() async {
+        let configuration = CorrectionRuntimeConfigurationLoader.load()
+        let result = await CorrectionRuntime.analyze(
+            context: TextContext(
+                beforeInput: "hey there. i has a apple",
+                afterInput: ""
+            ),
+            configuration: configuration,
+            prefersRemote: true
+        )
+        state = CorrectionExperienceState(
+            analysis: result.analysis,
+            source: result.source,
+            hasRelayConfiguration: configuration?.relay != nil
+        )
+    }
+}
+
+private struct CorrectionExperienceState {
+    let analysis: CorrectionAnalysis
+    let source: CorrectionRuntimeResult.Source
+    let hasRelayConfiguration: Bool
+
+    static let loading = CorrectionExperienceState(
+        analysis: CorrectionPipeline.analyzeLocally(
+            context: TextContext(
+                beforeInput: "hey there. i has a apple",
+                afterInput: ""
+            )
+        ),
+        source: .localOnly,
+        hasRelayConfiguration: false
+    )
+
+    var runtimeHeadline: String {
+        switch source {
+        case .relay:
+            return "Relay-backed corrections are active."
+        case .localFallback:
+            return hasRelayConfiguration
+                ? "Relay is configured, but local fallback is currently carrying the correction flow."
+                : "Running on the local fallback engine."
+        case .localOnly:
+            return "Running on the local on-device correction path."
+        }
+    }
+
+    var runtimeBody: String {
+        switch source {
+        case .relay:
+            return "The app found a relay configuration and successfully used it for the current correction pass. The same review and safety gates still apply before anything changes."
+        case .localFallback:
+            return hasRelayConfiguration
+                ? "A relay endpoint is configured, but the last correction pass fell back cleanly to the built-in conservative engine. That keeps the product usable even when the network path is unavailable."
+                : "No relay is configured yet, so the app is using the built-in conservative provider. This is still fully usable for alpha testing."
+        case .localOnly:
+            return "The app is currently set up to stay local. This is the lowest-risk path while the relay remains optional."
+        }
+    }
+
+    var setupSteps: [String] {
+        guard !hasRelayConfiguration else {
+            return []
+        }
+
+        return [
+            "Add AIKeyboardRelayEndpoint to the app Info.plist or set AIKEYBOARD_RELAY_ENDPOINT in the scheme environment.",
+            "If your relay expects auth, also provide AIKeyboardRelayToken or AIKEYBOARD_RELAY_TOKEN.",
+            "For keyboard-side relay use, enable Full Access after installing the app."
+        ]
     }
 }

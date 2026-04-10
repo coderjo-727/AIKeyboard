@@ -16,38 +16,25 @@ public struct CorrectionAnalysis: Sendable, Equatable {
     }
 }
 
-public enum SimpleCorrectionEngine {
-    public static func analyze(context: TextContext) -> CorrectionAnalysis {
-        let activeSentence = SentenceExtractor.extractActiveSentence(from: context)
-        let shouldAddTerminalPunctuation = contextSupportsTerminalPunctuation(
-            context: context,
-            activeSentence: activeSentence
-        )
-        let rawSuggestion = suggestCorrection(
-            for: activeSentence.text,
-            shouldAddTerminalPunctuation: shouldAddTerminalPunctuation
-        )
-        let suggestion = shouldSurfaceSuggestion(
-            rawSuggestion,
-            context: context,
-            activeSentence: activeSentence
-        ) ? rawSuggestion : nil
-        let diff = suggestion.map {
-            DiffRenderer.render(original: $0.original, corrected: $0.corrected)
-        } ?? []
+public struct RuleBasedCorrectionProvider: CorrectionProvider {
+    public init() {}
 
-        return CorrectionAnalysis(
-            activeSentence: activeSentence,
-            suggestion: suggestion,
-            diff: diff
-        )
+    public func suggestCorrection(for request: CorrectionProviderRequest) async throws -> CorrectionSuggestion? {
+        Self.localSuggestion(for: request)
     }
 
     public static func suggestCorrection(for sentence: String) -> CorrectionSuggestion? {
         suggestCorrection(for: sentence, shouldAddTerminalPunctuation: true)
     }
 
-    private static func suggestCorrection(
+    static func localSuggestion(for request: CorrectionProviderRequest) -> CorrectionSuggestion? {
+        suggestCorrection(
+            for: request.sentence,
+            shouldAddTerminalPunctuation: request.shouldAddTerminalPunctuation
+        )
+    }
+
+    static func suggestCorrection(
         for sentence: String,
         shouldAddTerminalPunctuation: Bool
     ) -> CorrectionSuggestion? {
@@ -118,53 +105,6 @@ public enum SimpleCorrectionEngine {
         return corrected
     }
 
-    private static func shouldSurfaceSuggestion(
-        _ suggestion: CorrectionSuggestion?,
-        context: TextContext,
-        activeSentence: ActiveSentence
-    ) -> Bool {
-        guard suggestion != nil else {
-            return false
-        }
-
-        let wordCount = activeSentence.text.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).count
-        guard wordCount >= 2 else {
-            return false
-        }
-
-        return !isCursorInsideWord(context: context)
-    }
-
-    private static func isCursorInsideWord(context: TextContext) -> Bool {
-        guard
-            let last = context.beforeInput.last,
-            let first = context.afterInput.first
-        else {
-            return false
-        }
-
-        return last.isLetterOrNumber && first.isLetterOrNumber
-    }
-
-    private static func contextSupportsTerminalPunctuation(
-        context: TextContext,
-        activeSentence: ActiveSentence
-    ) -> Bool {
-        guard let last = activeSentence.text.last, !".!?".contains(last) else {
-            return false
-        }
-
-        if let trailingFirst = activeSentence.trailingContext.first {
-            return trailingFirst.isWhitespace || ".!?".contains(trailingFirst)
-        }
-
-        guard let beforeLast = context.beforeInput.last else {
-            return false
-        }
-
-        return beforeLast.isWhitespace || beforeLast.isNewline
-    }
-
     private static func replacingMatches(
         in text: String,
         pattern: String,
@@ -224,8 +164,17 @@ public enum SimpleCorrectionEngine {
     }
 }
 
-private extension Character {
-    var isLetterOrNumber: Bool {
-        isLetter || isNumber
+public enum SimpleCorrectionEngine {
+    public static func analyze(context: TextContext) -> CorrectionAnalysis {
+        CorrectionPipeline.analyzeLocally(context: context)
+    }
+
+    public static func suggestCorrection(for sentence: String) -> CorrectionSuggestion? {
+        RuleBasedCorrectionProvider.localSuggestion(
+            for: CorrectionProviderRequest(
+                sentence: sentence,
+                shouldAddTerminalPunctuation: true
+            )
+        )
     }
 }

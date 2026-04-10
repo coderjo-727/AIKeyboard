@@ -30,8 +30,8 @@
 			<false/>
 			<key>PrimaryLanguage</key>
 			<string>en-US</string>
-			<key>RequestsOpenAccess</key>
-			<false/>
+      <key>RequestsOpenAccess</key>
+      <true/>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.keyboard-service</string>

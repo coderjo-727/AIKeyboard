@@ -155,8 +155,9 @@ After the app is installed on the device:
 4. Open the `AIKeyboard` entry in the keyboard list.
 5. If you want full extension capabilities later, enable `Allow Full Access`.
 
-This MVP does not rely on remote services, so the current local prototype is
-still meaningful even before any network-backed features exist.
+The product now supports an optional relay-backed correction path, but it still
+falls back to the built-in local provider when no relay is configured or when
+the relay is unavailable.
 
 ## Manual Testing Flow
 
@@ -182,3 +183,43 @@ Once the keyboard is enabled:
   matches the corrected ending.
 - The container app is still a lightweight shell rather than a full onboarding
   experience.
+
+## Development Relay
+
+The shared core now includes:
+
+- [OpenAICorrectionProvider.swift](/Users/inci/Documents/New%20project/AIKeyboard/Sources/AIKeyboardCore/OpenAICorrectionProvider.swift)
+  for direct development-only OpenAI calls
+- [RelayCorrectionProvider.swift](/Users/inci/Documents/New%20project/AIKeyboard/Sources/AIKeyboardCore/RelayCorrectionProvider.swift)
+  for calling your own backend relay
+- [openai_relay.py](/Users/inci/Documents/New%20project/server/openai_relay.py)
+  as a tiny local relay example that keeps the OpenAI API key off the app
+
+To run the sample relay locally:
+
+```bash
+export OPENAI_API_KEY="your_openai_api_key"
+export AIKEYBOARD_RELAY_TOKEN="choose_a_shared_secret"
+python3 server/openai_relay.py
+```
+
+It listens on:
+
+```text
+http://127.0.0.1:8787/v1/corrections
+```
+
+Important: this relay is a development bridge. For a real gamma or production
+deployment, host the relay on your own backend and keep the OpenAI API key on
+the server only.
+
+To let the app or keyboard discover a relay without hardcoding it in source,
+provide either:
+
+- `AIKEYBOARD_RELAY_ENDPOINT` and optional `AIKEYBOARD_RELAY_TOKEN` in the run
+  scheme environment
+- `AIKeyboardRelayEndpoint` and optional `AIKeyboardRelayToken` in the target
+  `Info.plist`
+
+For keyboard-side relay use on iOS, the keyboard extension must also have Full
+Access enabled by the user.

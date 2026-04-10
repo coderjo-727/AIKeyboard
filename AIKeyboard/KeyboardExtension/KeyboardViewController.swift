@@ -40,10 +40,13 @@ final class KeyboardViewController: UIInputViewController {
     private var expandedHeightConstraint: NSLayoutConstraint?
     private var latestAnalysis: CorrectionAnalysis?
     private var latestViewState = KeyboardPreviewViewState.make(from: nil)
+    private var latestRuntimeSource: CorrectionRuntimeResult.Source = .localOnly
     private var isExpanded = false
     private var keyboardState = KeyboardState()
     private let sessionMemory = KeyboardSessionMemory()
     private let layoutModel = KeyboardLayout.qwertyPrototype
+    private var previewTask: Task<Void, Never>?
+    private var previewRevision = 0
     private var proxyAdapter: KeyboardTextDocumentProxy {
         KeyboardTextDocumentProxyAdapter(proxy: textDocumentProxy)
     }
@@ -63,6 +66,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        previewTask?.cancel()
         sessionMemory.reset()
     }
 
@@ -325,32 +329,82 @@ final class KeyboardViewController: UIInputViewController {
 
     private func refreshPreview() {
         let context = KeyboardTextActionService.makeContext(for: proxyAdapter)
-        let analysis = sessionMemory.filteredAnalysis(
-            from: SimpleCorrectionEngine.analyze(context: context)
-        )
-        latestAnalysis = analysis
-        latestViewState = KeyboardPreviewViewState.make(from: analysis)
-        apply(viewState: latestViewState)
+        let configuration = CorrectionRuntimeConfigurationLoader.load()
+        let allowsRemote = hasFullAccess && configuration?.relay != nil
+        previewTask?.cancel()
+        previewRevision += 1
+        let revision = previewRevision
+
+        previewTask = Task { [weak self] in
+            let result = await CorrectionRuntime.analyze(
+                context: context,
+                configuration: configuration,
+                prefersRemote: allowsRemote
+            )
+
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                guard let self, revision == self.previewRevision else { return }
+                let analysis = self.sessionMemory.filteredAnalysis(from: result.analysis)
+                self.latestRuntimeSource = result.source
+                self.latestAnalysis = analysis
+                self.latestViewState = KeyboardPreviewViewState.make(from: analysis)
+                self.apply(viewState: self.latestViewState)
+            }
+        }
     }
 
     private func apply(viewState: KeyboardPreviewViewState) {
         previewCaptionLabel.text = viewState.caption
         previewLabel.attributedText = viewState.previewText
         previewLabel.text = viewState.previewFallback
-        previewMetaLabel.text = viewState.canApply
-            ? "Safe to apply from this cursor position"
-            : "Review available. Apply unlocks at a safe overlap point"
+        previewMetaLabel.text = previewMetaText(canApply: viewState.canApply)
         expandedBodyLabel.text = viewState.expandedBody
         quickApplyButton.isEnabled = viewState.canApply
         applyButton.isEnabled = viewState.canApply
         expandButton.isEnabled = viewState.canExpand
         expandButton.setTitle(isExpanded ? "Close" : "Review", for: .normal)
         helperEyebrowLabel.text = viewState.canExpand ? "READY TO REVIEW" : "LIGHTWEIGHT REVIEW"
-        helperLabel.text = viewState.canExpand
-            ? "A conservative suggestion is ready. Review it inline or keep typing."
-            : "Preview stays visible while typing. Open review only when you want the full change list."
+        helperLabel.text = helperText(canExpand: viewState.canExpand)
         renderDiffSegments(viewState.diffSegments)
         renderSuggestionRow(with: viewState)
+    }
+
+    private func previewMetaText(canApply: Bool) -> String {
+        let prefix = canApply
+            ? "Safe to apply from this cursor position."
+            : "Review available. Apply unlocks at a safe overlap point."
+
+        switch latestRuntimeSource {
+        case .relay:
+            return prefix + " Relay-backed correction is active."
+        case .localFallback:
+            return prefix + " Using the on-device fallback right now."
+        case .localOnly:
+            return prefix + (hasFullAccess
+                ? " Local correction path is active."
+                : " Enable Full Access to allow relay-backed corrections.")
+        }
+    }
+
+    private func helperText(canExpand: Bool) -> String {
+        let base = canExpand
+            ? "A conservative suggestion is ready. Review it inline or keep typing."
+            : "Preview stays visible while typing. Open review only when you want the full change list."
+
+        if !hasFullAccess {
+            return base + " Full Access is still off, so this session stays fully local."
+        }
+
+        switch latestRuntimeSource {
+        case .relay:
+            return base + " Relay quality is active for this pass."
+        case .localFallback:
+            return base + " The network path fell back cleanly to the local engine."
+        case .localOnly:
+            return base
+        }
     }
 
     private func renderDiffSegments(_ segments: [DiffSegment]) {
