@@ -8,4 +8,4 @@ Expected responsibilities:
 - Collapsed smart preview
 - Expanded review panel
 - Text context bridging through `UITextDocumentProxy`
-- Apply and cancel correction behavior
+- Apply, dismiss, and session-hide correction behavior
