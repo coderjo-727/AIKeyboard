@@ -13,6 +13,7 @@ struct KeyboardPreviewViewState {
     let chips: [SuggestionChip]
     let canExpand: Bool
     let canApply: Bool
+    let applyBlockedReason: String?
 
     static func make(from analysis: CorrectionAnalysis?) -> KeyboardPreviewViewState {
         guard let analysis, let suggestion = analysis.suggestion else {
@@ -27,7 +28,8 @@ struct KeyboardPreviewViewState {
                     SuggestionChip(title: "No change yet"),
                 ],
                 canExpand: false,
-                canApply: false
+                canApply: false,
+                applyBlockedReason: nil
             )
         }
 
@@ -49,7 +51,10 @@ struct KeyboardPreviewViewState {
                 SuggestionChip(title: suggestion.corrected),
             ],
             canExpand: true,
-            canApply: canApply
+            canApply: canApply,
+            applyBlockedReason: canApply
+                ? nil
+                : "Move the cursor to the end of the suggestion or after unchanged punctuation to apply safely."
         )
     }
 

@@ -495,9 +495,16 @@ final class KeyboardViewController: UIInputViewController {
 
     private func apply(viewState: KeyboardPreviewViewState) {
         previewCaptionLabel.text = viewState.caption
-        previewLabel.attributedText = viewState.previewText
-        previewLabel.text = viewState.previewFallback
-        previewMetaLabel.text = previewMetaText(canApply: viewState.canApply)
+        if let previewText = viewState.previewText {
+            previewLabel.attributedText = previewText
+        } else {
+            previewLabel.attributedText = nil
+            previewLabel.text = viewState.previewFallback
+        }
+        previewMetaLabel.text = previewMetaText(
+            canApply: viewState.canApply,
+            applyBlockedReason: viewState.applyBlockedReason
+        )
         expandedBodyLabel.text = viewState.expandedBody
         quickApplyButton.isEnabled = viewState.canApply
         applyButton.isEnabled = viewState.canApply
@@ -509,7 +516,11 @@ final class KeyboardViewController: UIInputViewController {
         renderSuggestionRow(with: viewState)
     }
 
-    private func previewMetaText(canApply: Bool) -> String {
+    private func previewMetaText(canApply: Bool, applyBlockedReason: String?) -> String {
+        if let reason = applyBlockedReason {
+            return reason
+        }
+
         let prefix = canApply
             ? "Safe to apply from this cursor position."
             : "Review available. Apply unlocks at a safe overlap point."
