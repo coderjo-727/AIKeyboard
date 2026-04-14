@@ -36,11 +36,7 @@ struct KeyboardState: Equatable {
         }
     }
 
-    mutating func syncWithDocumentContext(beforeInput: String) {
-        guard shouldRaiseAfterSentenceBoundary(beforeInput: beforeInput) else {
-            return
-        }
-
+    mutating func raiseShiftAfterSentenceBoundary() {
         shiftState = .raised
     }
 
@@ -79,14 +75,5 @@ struct KeyboardState: Equatable {
 
     private func isSentenceEndingPunctuation(_ value: String) -> Bool {
         [".", "!", "?"].contains(value)
-    }
-
-    private func shouldRaiseAfterSentenceBoundary(beforeInput: String) -> Bool {
-        let trimmed = beforeInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let last = trimmed.last else {
-            return false
-        }
-
-        return ".!?".contains(last)
     }
 }

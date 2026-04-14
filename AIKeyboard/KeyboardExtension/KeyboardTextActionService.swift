@@ -33,6 +33,29 @@ final class KeyboardTextDocumentProxyAdapter: KeyboardTextDocumentProxy {
 }
 
 enum KeyboardTextActionService {
+    struct KeyActionResult: Equatable {
+        let didMutateText: Bool
+        let insertedSentenceBoundary: Bool
+        let textMutationCount: Int
+
+        static let noTextChange = KeyActionResult(
+            didMutateText: false,
+            insertedSentenceBoundary: false,
+            textMutationCount: 0
+        )
+
+        static func textChange(
+            insertedSentenceBoundary: Bool = false,
+            textMutationCount: Int = 1
+        ) -> KeyActionResult {
+            KeyActionResult(
+                didMutateText: true,
+                insertedSentenceBoundary: insertedSentenceBoundary,
+                textMutationCount: textMutationCount
+            )
+        }
+    }
+
     @MainActor
     static func makeContext(for proxy: KeyboardTextDocumentProxy) -> TextContext {
         let beforeInput = proxy.documentContextBeforeInput ?? ""
@@ -61,58 +84,68 @@ enum KeyboardTextActionService {
     }
 
     @MainActor
+    @discardableResult
     static func handleKeyTap(
         role: KeyboardLayout.Key.Role,
         state: KeyboardState,
         using proxy: KeyboardTextDocumentProxy
-    ) {
+    ) -> KeyActionResult {
         switch role {
         case .backspace:
             proxy.deleteBackward()
+            return .textChange()
         case .space:
-            insertSpace(using: proxy)
+            return insertSpace(using: proxy)
         case .return:
             proxy.insertText("\n")
+            return .textChange(insertedSentenceBoundary: true)
         case .input(let value):
             let text = state.transformedText(value)
-            insert(text, using: proxy)
+            return insert(text, using: proxy)
         case .shift, .modeChange, .keyboardSwitch:
-            break
+            return .noTextChange
         }
     }
 
     @MainActor
-    private static func insertSpace(using proxy: KeyboardTextDocumentProxy) {
+    private static func insertSpace(using proxy: KeyboardTextDocumentProxy) -> KeyActionResult {
         let beforeInput = proxy.documentContextBeforeInput ?? ""
         guard !beforeInput.isEmpty else {
             proxy.insertText(" ")
-            return
+            return .textChange()
         }
 
         if shouldApplyDoubleSpacePeriod(beforeInput: beforeInput) {
             proxy.deleteBackward()
             proxy.insertText(". ")
-            return
+            return .textChange(insertedSentenceBoundary: true, textMutationCount: 2)
         }
 
         guard beforeInput.last?.isWhitespace != true else {
-            return
+            return .noTextChange
         }
 
         proxy.insertText(" ")
+        return .textChange()
     }
 
     @MainActor
-    private static func insert(_ text: String, using proxy: KeyboardTextDocumentProxy) {
+    private static func insert(_ text: String, using proxy: KeyboardTextDocumentProxy) -> KeyActionResult {
         if isPunctuation(text) {
+            var mutationCount = 1
             if proxy.documentContextBeforeInput?.last?.isWhitespace == true {
                 proxy.deleteBackward()
+                mutationCount += 1
             }
             proxy.insertText(text)
-            return
+            return .textChange(
+                insertedSentenceBoundary: isSentenceEndingPunctuation(text),
+                textMutationCount: mutationCount
+            )
         }
 
         proxy.insertText(text)
+        return .textChange()
     }
 
     private static func shouldApplyDoubleSpacePeriod(beforeInput: String) -> Bool {
@@ -130,5 +163,9 @@ enum KeyboardTextActionService {
 
     private static func isPunctuation(_ text: String) -> Bool {
         [".", ",", "!", "?", ":", ";", "'", "\""].contains(text)
+    }
+
+    private static func isSentenceEndingPunctuation(_ text: String) -> Bool {
+        [".", "!", "?"].contains(text)
     }
 }

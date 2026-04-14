@@ -10,6 +10,27 @@ struct KeyboardPreviewViewState {
     let canApply: Bool
     let applyBlockedReason: String?
 
+    func renderSignature(
+        source: CorrectionRuntimeResult.Source,
+        isExpanded: Bool
+    ) -> String {
+        let preview = previewText?.string ?? previewFallback ?? ""
+        let diffSignature = diffSegments
+            .map { "\($0.kind.rawValue):\($0.original)->\($0.replacement)" }
+            .joined(separator: "|")
+        return [
+            caption,
+            preview,
+            expandedBody,
+            diffSignature,
+            String(canExpand),
+            String(canApply),
+            applyBlockedReason ?? "",
+            "\(source)",
+            String(isExpanded),
+        ].joined(separator: "\u{1F}")
+    }
+
     static func make(from analysis: CorrectionAnalysis?) -> KeyboardPreviewViewState {
         guard let analysis, let suggestion = analysis.suggestion else {
             return KeyboardPreviewViewState(

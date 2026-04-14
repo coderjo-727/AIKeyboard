@@ -64,6 +64,9 @@ final class KeyboardViewController: UIInputViewController {
     private var refreshWorkItem: DispatchWorkItem?
     private var previewTask: Task<Void, Never>?
     private var previewRevision = 0
+    private var suppressedSelfTextChangeCount = 0
+    private var suppressSelfTextChangeUntil = Date.distantPast
+    private var lastAppliedPreviewSignature: String?
     private var proxyAdapter: KeyboardTextDocumentProxy {
         KeyboardTextDocumentProxyAdapter(proxy: textDocumentProxy)
     }
@@ -84,6 +87,12 @@ final class KeyboardViewController: UIInputViewController {
 
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
+        if suppressedSelfTextChangeCount > 0, Date() < suppressSelfTextChangeUntil {
+            suppressedSelfTextChangeCount -= 1
+            return
+        }
+
+        suppressedSelfTextChangeCount = 0
         schedulePreviewRefresh(after: 0.06)
     }
 
@@ -482,10 +491,11 @@ final class KeyboardViewController: UIInputViewController {
         let localAnalysis = sessionMemory.filteredAnalysis(
             from: CorrectionPipeline.analyzeLocally(context: context)
         )
+        let localViewState = KeyboardPreviewViewState.make(from: localAnalysis)
         latestRuntimeSource = .localOnly
         latestAnalysis = localAnalysis
-        latestViewState = KeyboardPreviewViewState.make(from: localAnalysis)
-        apply(viewState: latestViewState)
+        latestViewState = localViewState
+        applyIfNeeded(viewState: localViewState, source: latestRuntimeSource)
 
         guard allowsRemote else {
             return
@@ -506,12 +516,26 @@ final class KeyboardViewController: UIInputViewController {
             await MainActor.run {
                 guard let self, revision == self.previewRevision else { return }
                 let analysis = self.sessionMemory.filteredAnalysis(from: result.analysis)
+                let viewState = KeyboardPreviewViewState.make(from: analysis)
                 self.latestRuntimeSource = result.source
                 self.latestAnalysis = analysis
-                self.latestViewState = KeyboardPreviewViewState.make(from: analysis)
-                self.apply(viewState: self.latestViewState)
+                self.latestViewState = viewState
+                self.applyIfNeeded(viewState: viewState, source: result.source)
             }
         }
+    }
+
+    private func applyIfNeeded(
+        viewState: KeyboardPreviewViewState,
+        source: CorrectionRuntimeResult.Source
+    ) {
+        let signature = viewState.renderSignature(source: source, isExpanded: isExpanded)
+        guard signature != lastAppliedPreviewSignature else {
+            return
+        }
+
+        lastAppliedPreviewSignature = signature
+        apply(viewState: viewState)
     }
 
     private func apply(viewState: KeyboardPreviewViewState) {
@@ -692,14 +716,35 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
 
-        KeyboardTextActionService.handleKeyTap(role: role, state: keyboardState, using: proxyAdapter)
+        let action = KeyboardTextActionService.handleKeyTap(role: role, state: keyboardState, using: proxyAdapter)
+        if action.didMutateText {
+            suppressedSelfTextChangeCount += action.textMutationCount
+            suppressSelfTextChangeUntil = Date().addingTimeInterval(0.5)
+        }
+
         let previousState = keyboardState
         keyboardState.handleTap(for: role)
-        keyboardState.syncWithDocumentContext(beforeInput: proxyAdapter.documentContextBeforeInput ?? "")
+        if action.insertedSentenceBoundary {
+            keyboardState.raiseShiftAfterSentenceBoundary()
+        }
         if keyboardState != previousState {
             configureKeyboardRows(animated: false)
         }
-        schedulePreviewRefresh(after: 0.06)
+
+        if action.didMutateText {
+            schedulePreviewRefresh(after: previewRefreshDelay(after: role))
+        }
+    }
+
+    private func previewRefreshDelay(after role: KeyboardLayout.Key.Role) -> TimeInterval {
+        switch role {
+        case .space, .return:
+            return 0.09
+        case .input(let value) where [".", "!", "?", ","].contains(value):
+            return 0.09
+        default:
+            return 0.16
+        }
     }
 
     private func displayTitle(for key: KeyboardLayout.Key) -> String {
