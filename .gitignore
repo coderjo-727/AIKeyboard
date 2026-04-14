@@ -33,6 +33,7 @@ fastlane/test_output/
 # Python
 __pycache__/
 *.pyc
+.env
 
 # Local notes
 DEV_BIBLE.md

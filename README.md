@@ -196,6 +196,8 @@ The shared core now includes:
   for calling your own backend relay
 - [`openai_relay.py`](server/openai_relay.py)
   as a tiny local relay example that keeps the OpenAI API key off the app
+- [`server/README.md`](server/README.md)
+  for relay runtime, Docker, and deployment notes
 
 To run the sample relay locally:
 
@@ -217,6 +219,7 @@ Optional relay environment variables:
 - `AIKEYBOARD_RELAY_PORT`, default `8787`
 - `AIKEYBOARD_OPENAI_MODEL`, default `gpt-5.4-mini`
 - `AIKEYBOARD_OPENAI_TIMEOUT`, default `20`
+- `AIKEYBOARD_RATE_LIMIT_PER_MINUTE`, default `60`
 
 Important: this relay is a development bridge. For a real gamma or production
 deployment, host the relay on your own backend and keep the OpenAI API key on
