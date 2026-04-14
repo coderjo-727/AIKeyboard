@@ -5,8 +5,9 @@ final class KeyboardViewController: UIInputViewController {
         static let tint = UIColor(red: 0.78, green: 0.86, blue: 0.82, alpha: 1.0)
         static let tintSoft = UIColor(red: 0.21, green: 0.29, blue: 0.25, alpha: 1.0)
         static let surface = UIColor(red: 0.06, green: 0.07, blue: 0.07, alpha: 1.0)
-        static let panel = UIColor(red: 0.12, green: 0.13, blue: 0.13, alpha: 0.98)
+        static let panel = UIColor(red: 0.12, green: 0.13, blue: 0.13, alpha: 0.96)
         static let panelBorder = UIColor(red: 0.24, green: 0.26, blue: 0.25, alpha: 1.0)
+        static let action = UIColor(red: 0.78, green: 0.68, blue: 0.18, alpha: 1.0)
         static let key = UIColor(red: 0.23, green: 0.24, blue: 0.24, alpha: 1.0)
         static let keyAccent = UIColor(red: 0.17, green: 0.18, blue: 0.18, alpha: 1.0)
         static let keyForeground = UIColor(red: 0.94, green: 0.95, blue: 0.94, alpha: 1.0)
@@ -133,7 +134,7 @@ final class KeyboardViewController: UIInputViewController {
                 keyboardSurfaceSpacing: 0,
                 keySpacing: 4,
                 rowSpacing: 7,
-                previewHeight: 70
+                previewHeight: 44
             )
         }
 
@@ -147,7 +148,7 @@ final class KeyboardViewController: UIInputViewController {
                 keyboardSurfaceSpacing: 0,
                 keySpacing: 6,
                 rowSpacing: 9,
-                previewHeight: 76
+                previewHeight: 50
             )
         }
 
@@ -160,7 +161,7 @@ final class KeyboardViewController: UIInputViewController {
             keyboardSurfaceSpacing: 0,
             keySpacing: 6,
             rowSpacing: 8,
-            previewHeight: 74
+            previewHeight: 48
         )
     }
 
@@ -195,15 +196,20 @@ final class KeyboardViewController: UIInputViewController {
         previewContainer.layer.cornerRadius = 16
         previewContainer.layer.borderWidth = 1
         previewContainer.layer.borderColor = Layout.panelBorder.cgColor
-        previewContainer.clipsToBounds = true
+        previewContainer.layer.shadowColor = Layout.tint.cgColor
+        previewContainer.layer.shadowOpacity = 0.16
+        previewContainer.layer.shadowRadius = 8
+        previewContainer.layer.shadowOffset = CGSize(width: 0, height: 0)
+        previewContainer.clipsToBounds = false
 
-        previewCaptionLabel.font = .systemFont(ofSize: 10, weight: .bold)
+        previewCaptionLabel.font = .systemFont(ofSize: 10, weight: .heavy)
         previewCaptionLabel.textColor = Layout.tint
-        previewCaptionLabel.text = "Smart Preview"
+        previewCaptionLabel.text = "SMART"
 
         previewMetaLabel.font = .systemFont(ofSize: 10, weight: .medium)
         previewMetaLabel.textColor = Layout.mutedForeground
         previewMetaLabel.numberOfLines = 1
+        previewMetaLabel.isHidden = true
 
         previewLabel.font = .systemFont(ofSize: 15, weight: .semibold)
         previewLabel.numberOfLines = 1
@@ -217,27 +223,37 @@ final class KeyboardViewController: UIInputViewController {
         previewLabel.translatesAutoresizingMaskIntoConstraints = false
         previewScrollView.addSubview(previewLabel)
 
-        expandButton.configuration = .tinted()
-        expandButton.setTitle("Review", for: .normal)
+        expandButton.configuration = .plain()
+        expandButton.setTitle(nil, for: .normal)
+        expandButton.setImage(
+            UIImage(systemName: "text.magnifyingglass", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)),
+            for: .normal
+        )
         expandButton.tintColor = Layout.tint
-        expandButton.configuration?.baseBackgroundColor = Layout.tintSoft
+        expandButton.configuration?.baseForegroundColor = Layout.tint
         expandButton.configuration?.cornerStyle = .capsule
         expandButton.addTarget(self, action: #selector(handleExpandTap), for: .touchUpInside)
 
         quickApplyButton.configuration = .filled()
-        quickApplyButton.setTitle("Apply", for: .normal)
-        quickApplyButton.configuration?.baseBackgroundColor = UIColor(red: 0.78, green: 0.68, blue: 0.18, alpha: 1.0)
-        quickApplyButton.configuration?.baseForegroundColor = UIColor.black
+        quickApplyButton.setTitle(nil, for: .normal)
+        quickApplyButton.setImage(
+            UIImage(systemName: "paperplane.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .bold)),
+            for: .normal
+        )
+        quickApplyButton.configuration?.baseBackgroundColor = Layout.keyAccent
+        quickApplyButton.configuration?.baseForegroundColor = Layout.mutedForeground
         quickApplyButton.configuration?.cornerStyle = .capsule
+        quickApplyButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10)
+        quickApplyButton.layer.shadowColor = Layout.action.cgColor
+        quickApplyButton.layer.shadowOpacity = 0
+        quickApplyButton.layer.shadowRadius = 0
+        quickApplyButton.layer.shadowOffset = CGSize(width: 0, height: 0)
+        quickApplyButton.layer.masksToBounds = false
         quickApplyButton.addTarget(self, action: #selector(handleApplyTap), for: .touchUpInside)
 
-        let topRow = UIStackView(arrangedSubviews: [previewCaptionLabel, previewMetaLabel, UIView(), expandButton, quickApplyButton])
-        topRow.axis = .horizontal
-        topRow.alignment = .center
-        topRow.spacing = 8
-
-        let stack = UIStackView(arrangedSubviews: [topRow, previewScrollView])
-        stack.axis = .vertical
+        let stack = UIStackView(arrangedSubviews: [previewCaptionLabel, previewScrollView, expandButton, quickApplyButton])
+        stack.axis = .horizontal
+        stack.alignment = .center
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
         previewContainer.addSubview(stack)
@@ -246,10 +262,10 @@ final class KeyboardViewController: UIInputViewController {
         previewHeightConstraint?.isActive = true
 
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 10),
-            stack.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 14),
-            stack.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -14),
-            stack.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor, constant: -10),
+            stack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 7),
+            stack.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -10),
+            stack.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor, constant: -7),
             previewLabel.topAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.topAnchor),
             previewLabel.leadingAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.leadingAnchor),
             previewLabel.trailingAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.trailingAnchor),
@@ -514,8 +530,23 @@ final class KeyboardViewController: UIInputViewController {
         quickApplyButton.isEnabled = viewState.canApply
         applyButton.isEnabled = viewState.canApply
         expandButton.isEnabled = viewState.canExpand
-        expandButton.setTitle(isExpanded ? "Close" : "Review", for: .normal)
+        updatePreviewChrome(canApply: viewState.canApply, canExpand: viewState.canExpand)
         renderDiffSegments(viewState.diffSegments)
+    }
+
+    private func updatePreviewChrome(canApply: Bool, canExpand: Bool) {
+        let borderColor = canApply ? Layout.action : Layout.panelBorder
+        previewContainer.layer.borderColor = borderColor.cgColor
+        previewContainer.layer.shadowOpacity = canApply ? 0.26 : 0.14
+        previewContainer.layer.shadowRadius = canApply ? 12 : 8
+
+        quickApplyButton.configuration?.baseBackgroundColor = canApply ? Layout.action : Layout.keyAccent
+        quickApplyButton.configuration?.baseForegroundColor = canApply ? UIColor.black : Layout.mutedForeground
+        quickApplyButton.layer.shadowOpacity = canApply ? 0.32 : 0
+        quickApplyButton.layer.shadowRadius = canApply ? 9 : 0
+        quickApplyButton.alpha = canApply ? 1.0 : 0.58
+
+        expandButton.alpha = canExpand ? 0.95 : 0.38
     }
 
     private func previewMetaText(canApply: Bool, applyBlockedReason: String?) -> String {
@@ -664,6 +695,7 @@ final class KeyboardViewController: UIInputViewController {
         KeyboardTextActionService.handleKeyTap(role: role, state: keyboardState, using: proxyAdapter)
         let previousState = keyboardState
         keyboardState.handleTap(for: role)
+        keyboardState.syncWithDocumentContext(beforeInput: proxyAdapter.documentContextBeforeInput ?? "")
         if keyboardState != previousState {
             configureKeyboardRows(animated: false)
         }

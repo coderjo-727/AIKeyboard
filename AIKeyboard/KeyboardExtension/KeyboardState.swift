@@ -26,12 +26,22 @@ struct KeyboardState: Equatable {
         case .modeChange:
             toggleInputMode()
         case .input(let value):
-            if inputMode == .alphabetic, value.rangeOfCharacter(from: .letters) != nil, shiftState == .raised {
+            if isSentenceEndingPunctuation(value) {
+                shiftState = .raised
+            } else if inputMode == .alphabetic, value.rangeOfCharacter(from: .letters) != nil, shiftState == .raised {
                 shiftState = .lowered
             }
         case .space, .return, .backspace, .keyboardSwitch:
             break
         }
+    }
+
+    mutating func syncWithDocumentContext(beforeInput: String) {
+        guard shouldRaiseAfterSentenceBoundary(beforeInput: beforeInput) else {
+            return
+        }
+
+        shiftState = .raised
     }
 
     func transformedText(_ text: String) -> String {
@@ -65,5 +75,18 @@ struct KeyboardState: Equatable {
         case .numericSymbols:
             inputMode = .alphabetic
         }
+    }
+
+    private func isSentenceEndingPunctuation(_ value: String) -> Bool {
+        [".", "!", "?"].contains(value)
+    }
+
+    private func shouldRaiseAfterSentenceBoundary(beforeInput: String) -> Bool {
+        let trimmed = beforeInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let last = trimmed.last else {
+            return false
+        }
+
+        return ".!?".contains(last)
     }
 }

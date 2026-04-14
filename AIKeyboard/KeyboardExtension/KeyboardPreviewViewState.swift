@@ -15,7 +15,7 @@ struct KeyboardPreviewViewState {
             return KeyboardPreviewViewState(
                 caption: "Smart Preview",
                 previewText: nil,
-                previewFallback: "No confident correction yet",
+                previewFallback: "",
                 expandedBody: "Typing stays untouched until the correction is conservative and clearly sentence-scoped.",
                 diffSegments: [],
                 canExpand: false,
