@@ -334,12 +334,26 @@ final class KeyboardViewController: UIInputViewController {
         previewTask?.cancel()
         previewRevision += 1
         let revision = previewRevision
+        let localAnalysis = sessionMemory.filteredAnalysis(
+            from: CorrectionPipeline.analyzeLocally(context: context)
+        )
+        latestRuntimeSource = .localOnly
+        latestAnalysis = localAnalysis
+        latestViewState = KeyboardPreviewViewState.make(from: localAnalysis)
+        apply(viewState: latestViewState)
+
+        guard allowsRemote else {
+            return
+        }
 
         previewTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(280))
+            guard !Task.isCancelled else { return }
+
             let result = await CorrectionRuntime.analyze(
                 context: context,
                 configuration: configuration,
-                prefersRemote: allowsRemote
+                prefersRemote: true
             )
 
             guard !Task.isCancelled else { return }
@@ -544,6 +558,11 @@ final class KeyboardViewController: UIInputViewController {
     @objc
     private func handleKeyTap(_ sender: UIButton) {
         guard let role = role(for: sender) else { return }
+        if role == .keyboardSwitch {
+            advanceToNextInputMode()
+            return
+        }
+
         KeyboardTextActionService.handleKeyTap(role: role, state: keyboardState, using: proxyAdapter)
         keyboardState.handleTap(for: role)
         configureKeyboardRows()

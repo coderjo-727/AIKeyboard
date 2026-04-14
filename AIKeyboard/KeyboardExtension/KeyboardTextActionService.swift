@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 protocol KeyboardTextDocumentProxy: AnyObject {
     var documentContextBeforeInput: String? { get }
     var documentContextAfterInput: String? { get }
@@ -32,14 +33,10 @@ final class KeyboardTextDocumentProxyAdapter: KeyboardTextDocumentProxy {
 }
 
 enum KeyboardTextActionService {
+    @MainActor
     static func makeContext(for proxy: KeyboardTextDocumentProxy) -> TextContext {
         let beforeInput = proxy.documentContextBeforeInput ?? ""
         let afterInput = proxy.documentContextAfterInput ?? ""
-
-        if beforeInput.isEmpty && afterInput.isEmpty {
-            return TextContext(beforeInput: "i has a apple", afterInput: "")
-        }
-
         return TextContext(beforeInput: beforeInput, afterInput: afterInput)
     }
 
@@ -47,6 +44,7 @@ enum KeyboardTextActionService {
         SentenceReplacementPlanner.plan(for: analysis) != nil
     }
 
+    @MainActor
     static func applySuggestion(
         _ analysis: CorrectionAnalysis?,
         to proxy: KeyboardTextDocumentProxy
@@ -62,6 +60,7 @@ enum KeyboardTextActionService {
         return true
     }
 
+    @MainActor
     static func handleKeyTap(
         role: KeyboardLayout.Key.Role,
         state: KeyboardState,
@@ -71,27 +70,65 @@ enum KeyboardTextActionService {
         case .backspace:
             proxy.deleteBackward()
         case .space:
-            proxy.insertText(" ")
+            insertSpace(using: proxy)
         case .return:
             proxy.insertText("\n")
         case .input(let value):
             let text = state.transformedText(value)
-            let prefix = needsLeadingSpace(
-                before: proxy.documentContextBeforeInput,
-                inserting: text
-            ) ? " " : ""
-            let suffix = text == "." || text == "," || text == "!" || text == "?" || text == ":" || text == ";" ? "" : " "
-            proxy.insertText(prefix + text + suffix)
+            insert(text, using: proxy)
         case .shift, .modeChange, .keyboardSwitch:
             break
         }
     }
 
-    private static func needsLeadingSpace(before text: String?, inserting token: String) -> Bool {
-        guard token != ".", let last = text?.last else {
+    @MainActor
+    private static func insertSpace(using proxy: KeyboardTextDocumentProxy) {
+        let beforeInput = proxy.documentContextBeforeInput ?? ""
+        guard !beforeInput.isEmpty else {
+            proxy.insertText(" ")
+            return
+        }
+
+        if shouldApplyDoubleSpacePeriod(beforeInput: beforeInput) {
+            proxy.deleteBackward()
+            proxy.insertText(". ")
+            return
+        }
+
+        guard beforeInput.last?.isWhitespace != true else {
+            return
+        }
+
+        proxy.insertText(" ")
+    }
+
+    @MainActor
+    private static func insert(_ text: String, using proxy: KeyboardTextDocumentProxy) {
+        if isPunctuation(text) {
+            if proxy.documentContextBeforeInput?.last?.isWhitespace == true {
+                proxy.deleteBackward()
+            }
+            proxy.insertText(text)
+            return
+        }
+
+        proxy.insertText(text)
+    }
+
+    private static func shouldApplyDoubleSpacePeriod(beforeInput: String) -> Bool {
+        guard beforeInput.last == " " else {
             return false
         }
 
-        return !last.isWhitespace && !".!?".contains(last)
+        let trimmed = beforeInput.dropLast()
+        guard let previous = trimmed.last else {
+            return false
+        }
+
+        return previous.isLetter || previous.isNumber
+    }
+
+    private static func isPunctuation(_ text: String) -> Bool {
+        [".", ",", "!", "?", ":", ";", "'", "\""].contains(text)
     }
 }

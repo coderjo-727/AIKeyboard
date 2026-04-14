@@ -7,7 +7,7 @@ uses only Python's standard library so it can run locally without extra
 dependencies.
 """
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 import urllib.error
@@ -19,6 +19,8 @@ MODEL = os.environ.get("AIKEYBOARD_OPENAI_MODEL", "gpt-5.4-mini")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 RELAY_AUTH_TOKEN = os.environ.get("AIKEYBOARD_RELAY_TOKEN", "")
 PORT = int(os.environ.get("AIKEYBOARD_RELAY_PORT", "8787"))
+HOST = os.environ.get("AIKEYBOARD_RELAY_HOST", "127.0.0.1")
+UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("AIKEYBOARD_OPENAI_TIMEOUT", "20"))
 
 
 SCHEMA = {
@@ -125,7 +127,7 @@ class RelayHandler(BaseHTTPRequestHandler):
                 },
                 method="POST",
             )
-            with urllib.request.urlopen(request) as response:
+            with urllib.request.urlopen(request, timeout=UPSTREAM_TIMEOUT_SECONDS) as response:
                 response_payload = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as error:
             body = error.read().decode("utf-8", errors="replace")
@@ -175,8 +177,8 @@ def extract_output_text(payload):
 
 
 def main():
-    server = HTTPServer(("127.0.0.1", PORT), RelayHandler)
-    print(f"AI Keyboard relay listening on http://127.0.0.1:{PORT}/v1/corrections")
+    server = ThreadingHTTPServer((HOST, PORT), RelayHandler)
+    print(f"AI Keyboard relay listening on http://{HOST}:{PORT}/v1/corrections")
     server.serve_forever()
 
 

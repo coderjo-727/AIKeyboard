@@ -9,6 +9,13 @@ func suggestsConservativeFixForCommonTypos() {
 }
 
 @Test
+func suggestsCommonSpellingAndContractionFixes() {
+    let suggestion = SimpleCorrectionEngine.suggestCorrection(for: "im definately going")
+
+    #expect(suggestion?.corrected == "I'm definitely going.")
+}
+
+@Test
 func preservesAlreadyAcceptableInformalSentence() {
     let suggestion = SimpleCorrectionEngine.suggestCorrection(for: "lol that was wild")
 

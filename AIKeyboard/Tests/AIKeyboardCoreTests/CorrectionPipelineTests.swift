@@ -97,3 +97,16 @@ func runtimeFallsBackWhenRemoteReturnsNothing() async {
     #expect(result.source == .localFallback)
     #expect(result.analysis.suggestion?.corrected == "I have an apple.")
 }
+
+@Test
+func runtimeConfigurationLoadsRelayFromEnvironment() {
+    let configuration = CorrectionRuntimeConfigurationLoader.load(
+        environment: [
+            "AIKEYBOARD_RELAY_ENDPOINT": "https://example.com/v1/corrections",
+            "AIKEYBOARD_RELAY_TOKEN": "test-token",
+        ]
+    )
+
+    #expect(configuration?.relay?.endpoint.absoluteString == "https://example.com/v1/corrections")
+    #expect(configuration?.relay?.apiKey == "test-token")
+}

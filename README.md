@@ -14,10 +14,10 @@ control, transparency, and privacy:
 - Session-only adaptation in memory
 - No persistent storage of raw text or user profiles
 
-## MVP Goals
+## Product Goals
 
-The MVP focuses on a conservative correction experience inside a custom keyboard
-extension:
+The current alpha focuses on a conservative correction experience inside a
+custom keyboard extension:
 
 - Detect the active sentence from keyboard text context
 - Show a collapsed smart preview above the keys
@@ -51,7 +51,7 @@ The correction engine must not:
 
 Silence is better than low-confidence suggestions.
 
-## Local Scaffold
+## Local Architecture
 
 The repo now includes a local-first scaffold:
 
@@ -66,16 +66,16 @@ AIKeyboard/
     AIKeyboardCoreTests/
 ```
 
-`AIKeyboardCore` is a Swift package that holds the reusable logic we can test
-before wiring up the iOS app and keyboard extension targets.
+`AIKeyboardCore` is a Swift package that holds reusable correction logic shared
+by the iOS app and keyboard extension targets.
 
 ## Current Status
 
-This repository now contains a buildable Xcode app target, a buildable custom
+This repository contains a buildable Xcode app target, a buildable custom
 keyboard extension target, and a testable shared Swift package for sentence
 extraction, conservative correction gating, diff rendering, safe replacement
-planning, and session-only adaptation behavior. The current local baseline is a
-coherent MVP scaffold and close to a good first GitHub push.
+planning, session-only adaptation behavior, and relay-aware provider selection.
+The current state is an early working alpha, not a placeholder scaffold.
 
 ## Test Locally
 
@@ -120,8 +120,8 @@ Then choose the `AIKeyboard` scheme and build with `Product > Build`.
 
 ### 1. Open The Project
 
-Open [AIKeyboard.xcodeproj](/Users/inci/Documents/New%20project/AIKeyboard/AIKeyboard.xcodeproj/project.pbxproj)
-through Xcode and select the `AIKeyboard` app target.
+Open [`AIKeyboard.xcodeproj`](AIKeyboard/AIKeyboard.xcodeproj) through Xcode
+and select the `AIKeyboard` app target.
 
 ### 2. Configure Signing
 
@@ -142,8 +142,8 @@ unique reverse-DNS value for both targets.
 - choose the device as the run destination in Xcode
 - run the `AIKeyboard` scheme
 
-The container app is mainly the installation shell right now. The custom
-keyboard experience lives in the extension target embedded inside it.
+The container app is the installation, runtime status, and privacy shell. The
+custom keyboard experience lives in the extension target embedded inside it.
 
 ## Enable The Keyboard On iOS
 
@@ -153,7 +153,8 @@ After the app is installed on the device:
 2. Tap `Add New Keyboard...`.
 3. Select `AIKeyboard`.
 4. Open the `AIKeyboard` entry in the keyboard list.
-5. If you want full extension capabilities later, enable `Allow Full Access`.
+5. Enable `Allow Full Access` if you want relay-backed correction inside the
+   keyboard extension.
 
 The product now supports an optional relay-backed correction path, but it still
 falls back to the built-in local provider when no relay is configured or when
@@ -176,23 +177,24 @@ Once the keyboard is enabled:
    before the cursor.
 9. Dismiss the keyboard, reopen it, and confirm session-only memory resets.
 
-## Known MVP Limits
+## Known Alpha Limits
 
-- The correction engine is still rule-based and intentionally conservative.
+- Without a configured relay, the correction engine is still rule-based and
+  intentionally conservative.
 - The keyboard only applies replacements when the text after the cursor already
   matches the corrected ending.
-- The container app is still a lightweight shell rather than a full onboarding
-  experience.
+- Relay configuration is currently build-time / scheme-time rather than a
+  polished user-facing account setup flow.
 
 ## Development Relay
 
 The shared core now includes:
 
-- [OpenAICorrectionProvider.swift](/Users/inci/Documents/New%20project/AIKeyboard/Sources/AIKeyboardCore/OpenAICorrectionProvider.swift)
+- [`OpenAICorrectionProvider.swift`](AIKeyboard/Sources/AIKeyboardCore/OpenAICorrectionProvider.swift)
   for direct development-only OpenAI calls
-- [RelayCorrectionProvider.swift](/Users/inci/Documents/New%20project/AIKeyboard/Sources/AIKeyboardCore/RelayCorrectionProvider.swift)
+- [`RelayCorrectionProvider.swift`](AIKeyboard/Sources/AIKeyboardCore/RelayCorrectionProvider.swift)
   for calling your own backend relay
-- [openai_relay.py](/Users/inci/Documents/New%20project/server/openai_relay.py)
+- [`openai_relay.py`](server/openai_relay.py)
   as a tiny local relay example that keeps the OpenAI API key off the app
 
 To run the sample relay locally:
@@ -208,6 +210,13 @@ It listens on:
 ```text
 http://127.0.0.1:8787/v1/corrections
 ```
+
+Optional relay environment variables:
+
+- `AIKEYBOARD_RELAY_HOST`, default `127.0.0.1`
+- `AIKEYBOARD_RELAY_PORT`, default `8787`
+- `AIKEYBOARD_OPENAI_MODEL`, default `gpt-5.4-mini`
+- `AIKEYBOARD_OPENAI_TIMEOUT`, default `20`
 
 Important: this relay is a development bridge. For a real gamma or production
 deployment, host the relay on your own backend and keep the OpenAI API key on

@@ -69,14 +69,32 @@ public struct RuleBasedCorrectionProvider: CorrectionProvider {
 
         let replacements: [(pattern: String, replacement: String)] = [
             (#"\bteh\b"#, "the"),
+            (#"\brecieve\b"#, "receive"),
+            (#"\bseperate\b"#, "separate"),
+            (#"\bdefinately\b"#, "definitely"),
+            (#"\bthier\b"#, "their"),
+            (#"\boccured\b"#, "occurred"),
+            (#"\bwierd\b"#, "weird"),
             (#"\bi has\b"#, "I have"),
             (#"\bi am\b"#, "I am"),
+            (#"\bim\b"#, "I'm"),
+            (#"\bive\b"#, "I've"),
+            (#"\bid\b"#, "I'd"),
+            (#"\bill\b"#, "I'll"),
             (#"\bi\b"#, "I"),
             (#"\ba apple\b"#, "an apple"),
             (#"\bu\b"#, "you"),
             (#"\bur\b"#, "your"),
             (#"\bdont\b"#, "don't"),
             (#"\bcant\b"#, "can't"),
+            (#"\bwont\b"#, "won't"),
+            (#"\bshouldnt\b"#, "shouldn't"),
+            (#"\bcouldnt\b"#, "couldn't"),
+            (#"\bwouldnt\b"#, "wouldn't"),
+            (#"\btheyre\b"#, "they're"),
+            (#"\byoure\b"#, "you're"),
+            (#"\bweve\b"#, "we've"),
+            (#"\btheyll\b"#, "they'll"),
         ]
 
         for rule in replacements {
