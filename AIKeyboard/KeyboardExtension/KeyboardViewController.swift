@@ -2,16 +2,16 @@ import UIKit
 
 final class KeyboardViewController: UIInputViewController {
     private enum Layout {
-        static let tint = UIColor(red: 0.09, green: 0.39, blue: 0.30, alpha: 1.0)
-        static let tintSoft = UIColor(red: 0.84, green: 0.92, blue: 0.88, alpha: 1.0)
-        static let surface = UIColor(red: 0.97, green: 0.97, blue: 0.94, alpha: 1.0)
-        static let panel = UIColor(red: 0.99, green: 0.99, blue: 0.97, alpha: 0.97)
-        static let panelBorder = UIColor(red: 0.84, green: 0.87, blue: 0.82, alpha: 0.8)
-        static let key = UIColor(red: 0.99, green: 0.99, blue: 0.98, alpha: 1.0)
-        static let keyAccent = UIColor(red: 0.86, green: 0.90, blue: 0.86, alpha: 1.0)
-        static let keyForeground = UIColor(red: 0.12, green: 0.15, blue: 0.13, alpha: 1.0)
-        static let mutedForeground = UIColor(red: 0.38, green: 0.42, blue: 0.39, alpha: 1.0)
-        static let shadow = UIColor(red: 0.08, green: 0.12, blue: 0.09, alpha: 0.08)
+        static let tint = UIColor(red: 0.78, green: 0.86, blue: 0.82, alpha: 1.0)
+        static let tintSoft = UIColor(red: 0.21, green: 0.29, blue: 0.25, alpha: 1.0)
+        static let surface = UIColor(red: 0.06, green: 0.07, blue: 0.07, alpha: 1.0)
+        static let panel = UIColor(red: 0.12, green: 0.13, blue: 0.13, alpha: 0.98)
+        static let panelBorder = UIColor(red: 0.24, green: 0.26, blue: 0.25, alpha: 1.0)
+        static let key = UIColor(red: 0.23, green: 0.24, blue: 0.24, alpha: 1.0)
+        static let keyAccent = UIColor(red: 0.17, green: 0.18, blue: 0.18, alpha: 1.0)
+        static let keyForeground = UIColor(red: 0.94, green: 0.95, blue: 0.94, alpha: 1.0)
+        static let mutedForeground = UIColor(red: 0.66, green: 0.69, blue: 0.67, alpha: 1.0)
+        static let shadow = UIColor.black.withAlphaComponent(0.16)
 
         struct Metrics {
             let preferredCollapsedHeight: CGFloat
@@ -22,12 +22,13 @@ final class KeyboardViewController: UIInputViewController {
             let keyboardSurfaceSpacing: CGFloat
             let keySpacing: CGFloat
             let rowSpacing: CGFloat
-            let chipHeight: CGFloat
+            let previewHeight: CGFloat
         }
     }
 
     private let rootStack = UIStackView()
     private let previewContainer = UIView()
+    private let previewScrollView = UIScrollView()
     private let previewLabel = UILabel()
     private let previewCaptionLabel = UILabel()
     private let previewMetaLabel = UILabel()
@@ -46,13 +47,12 @@ final class KeyboardViewController: UIInputViewController {
     private let applyButton = UIButton(type: .system)
 
     private let keyboardSurface = UIStackView()
-    private let suggestionKeys = UIStackView()
     private let keyboardRowsStack = UIStackView()
 
     private var preferredHeightConstraint: NSLayoutConstraint?
     private var expandedHeightConstraint: NSLayoutConstraint?
     private var keyHeightConstraints: [NSLayoutConstraint] = []
-    private var chipHeightConstraint: NSLayoutConstraint?
+    private var previewHeightConstraint: NSLayoutConstraint?
     private var latestAnalysis: CorrectionAnalysis?
     private var latestViewState = KeyboardPreviewViewState.make(from: nil)
     private var latestRuntimeSource: CorrectionRuntimeResult.Source = .localOnly
@@ -123,42 +123,42 @@ final class KeyboardViewController: UIInputViewController {
         let width = max(view.bounds.width, UIScreen.main.bounds.width)
         if width < 380 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 316,
+                preferredCollapsedHeight: 286,
                 preferredExpandedHeight: 444,
                 expandedPanelHeight: 212,
-                keyHeight: 40,
-                rootSpacing: 7,
-                keyboardSurfaceSpacing: 7,
+                keyHeight: 36,
+                rootSpacing: 8,
+                keyboardSurfaceSpacing: 0,
                 keySpacing: 5,
-                rowSpacing: 6,
-                chipHeight: 30
+                rowSpacing: 8,
+                previewHeight: 70
             )
         }
 
         if width >= 430 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 348,
+                preferredCollapsedHeight: 318,
                 preferredExpandedHeight: 498,
                 expandedPanelHeight: 256,
-                keyHeight: 46,
-                rootSpacing: 8,
-                keyboardSurfaceSpacing: 8,
-                keySpacing: 8,
-                rowSpacing: 9,
-                chipHeight: 34
+                keyHeight: 42,
+                rootSpacing: 10,
+                keyboardSurfaceSpacing: 0,
+                keySpacing: 7,
+                rowSpacing: 10,
+                previewHeight: 76
             )
         }
 
         return Layout.Metrics(
-            preferredCollapsedHeight: 332,
+            preferredCollapsedHeight: 302,
             preferredExpandedHeight: 468,
             expandedPanelHeight: 236,
-            keyHeight: 44,
-            rootSpacing: 8,
-            keyboardSurfaceSpacing: 8,
+            keyHeight: 40,
+            rootSpacing: 9,
+            keyboardSurfaceSpacing: 0,
             keySpacing: 7,
-            rowSpacing: 8,
-            chipHeight: 32
+            rowSpacing: 9,
+            previewHeight: 74
         )
     }
 
@@ -168,10 +168,9 @@ final class KeyboardViewController: UIInputViewController {
             ? metrics.preferredExpandedHeight
             : metrics.preferredCollapsedHeight
         expandedHeightConstraint?.constant = isExpanded ? metrics.expandedPanelHeight : 0
-        chipHeightConstraint?.constant = metrics.chipHeight
+        previewHeightConstraint?.constant = metrics.previewHeight
         rootStack.spacing = metrics.rootSpacing
         keyboardSurface.spacing = metrics.keyboardSurfaceSpacing
-        suggestionKeys.spacing = metrics.keySpacing
         keyboardRowsStack.spacing = metrics.rowSpacing
 
         for row in keyboardRowsStack.arrangedSubviews.compactMap({ $0 as? UIStackView }) {
@@ -191,20 +190,30 @@ final class KeyboardViewController: UIInputViewController {
     private func configurePreviewBar() {
         previewContainer.translatesAutoresizingMaskIntoConstraints = false
         previewContainer.backgroundColor = Layout.panel
-        previewContainer.layer.cornerRadius = 20
-        applyCardStyle(to: previewContainer, shadowOpacity: 0.12)
+        previewContainer.layer.cornerRadius = 16
+        previewContainer.layer.borderWidth = 1
+        previewContainer.layer.borderColor = Layout.panelBorder.cgColor
+        previewContainer.clipsToBounds = true
 
-        previewCaptionLabel.font = .systemFont(ofSize: 11, weight: .semibold)
+        previewCaptionLabel.font = .systemFont(ofSize: 10, weight: .bold)
         previewCaptionLabel.textColor = Layout.tint
         previewCaptionLabel.text = "Smart Preview"
 
-        previewMetaLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        previewMetaLabel.font = .systemFont(ofSize: 10, weight: .medium)
         previewMetaLabel.textColor = Layout.mutedForeground
-        previewMetaLabel.text = "Sentence-aware and tap-to-review"
+        previewMetaLabel.numberOfLines = 1
 
-        previewLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        previewLabel.numberOfLines = 2
+        previewLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        previewLabel.numberOfLines = 1
         previewLabel.textColor = Layout.keyForeground
+        previewLabel.lineBreakMode = .byTruncatingTail
+
+        previewScrollView.showsHorizontalScrollIndicator = false
+        previewScrollView.alwaysBounceHorizontal = true
+        previewScrollView.delaysContentTouches = false
+        previewScrollView.translatesAutoresizingMaskIntoConstraints = false
+        previewLabel.translatesAutoresizingMaskIntoConstraints = false
+        previewScrollView.addSubview(previewLabel)
 
         expandButton.configuration = .tinted()
         expandButton.setTitle("Review", for: .normal)
@@ -215,36 +224,46 @@ final class KeyboardViewController: UIInputViewController {
 
         quickApplyButton.configuration = .filled()
         quickApplyButton.setTitle("Apply", for: .normal)
-        quickApplyButton.configuration?.baseBackgroundColor = Layout.tint
+        quickApplyButton.configuration?.baseBackgroundColor = UIColor(red: 0.78, green: 0.68, blue: 0.18, alpha: 1.0)
+        quickApplyButton.configuration?.baseForegroundColor = UIColor.black
         quickApplyButton.configuration?.cornerStyle = .capsule
         quickApplyButton.addTarget(self, action: #selector(handleApplyTap), for: .touchUpInside)
 
-        let topRow = UIStackView(arrangedSubviews: [previewCaptionLabel, UIView(), expandButton, quickApplyButton])
+        let topRow = UIStackView(arrangedSubviews: [previewCaptionLabel, previewMetaLabel, UIView(), expandButton, quickApplyButton])
         topRow.axis = .horizontal
         topRow.alignment = .center
-        topRow.spacing = 10
+        topRow.spacing = 8
 
-        let stack = UIStackView(arrangedSubviews: [topRow, previewLabel, previewMetaLabel])
+        let stack = UIStackView(arrangedSubviews: [topRow, previewScrollView])
         stack.axis = .vertical
-        stack.spacing = 6
+        stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
         previewContainer.addSubview(stack)
 
+        previewHeightConstraint = previewContainer.heightAnchor.constraint(equalToConstant: currentMetrics.previewHeight)
+        previewHeightConstraint?.isActive = true
+
         NSLayoutConstraint.activate([
-            previewContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 84),
-            stack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 14),
+            stack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 10),
             stack.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 14),
             stack.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -14),
-            stack.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor, constant: -14),
+            stack.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor, constant: -10),
+            previewLabel.topAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.topAnchor),
+            previewLabel.leadingAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.leadingAnchor),
+            previewLabel.trailingAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.trailingAnchor),
+            previewLabel.bottomAnchor.constraint(equalTo: previewScrollView.contentLayoutGuide.bottomAnchor),
+            previewLabel.heightAnchor.constraint(equalTo: previewScrollView.frameLayoutGuide.heightAnchor),
+            previewLabel.widthAnchor.constraint(greaterThanOrEqualTo: previewScrollView.frameLayoutGuide.widthAnchor),
         ])
     }
 
     private func configureExpandedPanel() {
         expandedPanel.translatesAutoresizingMaskIntoConstraints = false
         expandedPanel.backgroundColor = Layout.panel
-        expandedPanel.layer.cornerRadius = 24
+        expandedPanel.layer.cornerRadius = 18
         expandedPanel.clipsToBounds = true
-        applyCardStyle(to: expandedPanel, shadowOpacity: 0.14)
+        expandedPanel.layer.borderWidth = 1
+        expandedPanel.layer.borderColor = Layout.panelBorder.cgColor
 
         expandedHandle.translatesAutoresizingMaskIntoConstraints = false
         expandedHandle.backgroundColor = Layout.panelBorder
@@ -330,18 +349,10 @@ final class KeyboardViewController: UIInputViewController {
         keyboardSurface.spacing = currentMetrics.keyboardSurfaceSpacing
         keyboardSurface.distribution = .fill
 
-        suggestionKeys.axis = .horizontal
-        suggestionKeys.spacing = 8
-        suggestionKeys.distribution = .fillEqually
-
         keyboardRowsStack.axis = .vertical
         keyboardRowsStack.spacing = currentMetrics.rowSpacing
         keyboardRowsStack.distribution = .fill
 
-        chipHeightConstraint = suggestionKeys.heightAnchor.constraint(equalToConstant: currentMetrics.chipHeight)
-        chipHeightConstraint?.isActive = true
-
-        keyboardSurface.addArrangedSubview(suggestionKeys)
         keyboardSurface.addArrangedSubview(keyboardRowsStack)
     }
 
@@ -383,13 +394,14 @@ final class KeyboardViewController: UIInputViewController {
         button.configuration = .filled()
         button.configuration?.baseBackgroundColor = backgroundColor(for: key.role)
         button.configuration?.baseForegroundColor = foregroundColor(for: key.role)
-        button.configuration?.cornerStyle = .large
+        button.configuration?.cornerStyle = .medium
+        button.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4)
         button.setTitle(displayTitle(for: key), for: .normal)
         button.titleLabel?.font = font(for: key.role)
         button.layer.shadowColor = Layout.shadow.cgColor
-        button.layer.shadowOpacity = 0.16
-        button.layer.shadowRadius = 8
-        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        button.layer.shadowOpacity = 0.08
+        button.layer.shadowRadius = 2
+        button.layer.shadowOffset = CGSize(width: 0, height: 1)
         button.layer.masksToBounds = false
         let heightConstraint = button.heightAnchor.constraint(equalToConstant: currentMetrics.keyHeight)
         heightConstraint.isActive = true
@@ -474,7 +486,6 @@ final class KeyboardViewController: UIInputViewController {
         expandButton.isEnabled = viewState.canExpand
         expandButton.setTitle(isExpanded ? "Close" : "Review", for: .normal)
         renderDiffSegments(viewState.diffSegments)
-        renderSuggestionRow(with: viewState)
     }
 
     private func previewMetaText(canApply: Bool, applyBlockedReason: String?) -> String {
@@ -516,8 +527,8 @@ final class KeyboardViewController: UIInputViewController {
 
         for segment in segments {
             let row = UIView()
-            row.backgroundColor = UIColor.white.withAlphaComponent(0.94)
-            row.layer.cornerRadius = 16
+            row.backgroundColor = Layout.key
+            row.layer.cornerRadius = 12
             row.layer.borderWidth = 1
             row.layer.borderColor = Layout.panelBorder.cgColor
 
@@ -546,25 +557,6 @@ final class KeyboardViewController: UIInputViewController {
             ])
 
             diffStackView.addArrangedSubview(row)
-        }
-    }
-
-    private func renderSuggestionRow(with viewState: KeyboardPreviewViewState) {
-        suggestionKeys.arrangedSubviews.forEach { view in
-            suggestionKeys.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-
-        for chip in viewState.chips {
-            let button = UIButton(type: .system)
-            button.configuration = .tinted()
-            button.configuration?.cornerStyle = .capsule
-            button.configuration?.baseForegroundColor = Layout.tint
-            button.configuration?.baseBackgroundColor = Layout.tintSoft
-            button.setTitle(chip.title, for: .normal)
-            button.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
-            button.isUserInteractionEnabled = false
-            suggestionKeys.addArrangedSubview(button)
         }
     }
 
@@ -651,7 +643,7 @@ final class KeyboardViewController: UIInputViewController {
     private func displayTitle(for key: KeyboardLayout.Key) -> String {
         switch key.role {
         case .keyboardSwitch:
-            return "next"
+            return "◎"
         default:
             return key.title
         }
@@ -659,8 +651,10 @@ final class KeyboardViewController: UIInputViewController {
 
     private func backgroundColor(for role: KeyboardLayout.Key.Role) -> UIColor {
         switch role {
-        case .space, .input:
+        case .input:
             return Layout.key
+        case .space:
+            return UIColor(red: 0.27, green: 0.28, blue: 0.28, alpha: 1.0)
         default:
             return Layout.keyAccent
         }
@@ -669,16 +663,16 @@ final class KeyboardViewController: UIInputViewController {
     private func highlightedBackgroundColor(for role: KeyboardLayout.Key.Role) -> UIColor {
         switch role {
         case .space, .input:
-            return UIColor(red: 0.92, green: 0.95, blue: 0.92, alpha: 1.0)
+            return UIColor(red: 0.34, green: 0.35, blue: 0.35, alpha: 1.0)
         default:
-            return UIColor(red: 0.77, green: 0.84, blue: 0.79, alpha: 1.0)
+            return UIColor(red: 0.25, green: 0.26, blue: 0.26, alpha: 1.0)
         }
     }
 
     private func foregroundColor(for role: KeyboardLayout.Key.Role) -> UIColor {
         switch role {
         case .modeChange, .keyboardSwitch:
-            return Layout.tint
+            return Layout.keyForeground
         default:
             return Layout.keyForeground
         }
@@ -744,16 +738,6 @@ final class KeyboardViewController: UIInputViewController {
 
     private func display(_ value: String) -> String {
         value.isEmpty ? "∅" : value
-    }
-
-    private func applyCardStyle(to view: UIView, shadowOpacity: Float) {
-        view.layer.borderWidth = 1
-        view.layer.borderColor = Layout.panelBorder.cgColor
-        view.layer.shadowColor = Layout.shadow.cgColor
-        view.layer.shadowOpacity = shadowOpacity
-        view.layer.shadowRadius = 18
-        view.layer.shadowOffset = CGSize(width: 0, height: 10)
-        view.layer.masksToBounds = false
     }
 
     private func applyInitialVisualState() {

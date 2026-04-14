@@ -55,11 +55,10 @@ struct KeyboardLayout {
                 Key(title: "⌫", role: .backspace, widthMultiplier: 1.35),
             ],
             [
-                Key(title: "123", role: .modeChange("123"), widthMultiplier: 1.3),
-                Key(title: "next", role: .keyboardSwitch),
-                Key(title: "space", role: .space, widthMultiplier: 4.6),
-                Key(title: ".", role: .input(".")),
-                Key(title: "return", role: .return, widthMultiplier: 1.5),
+                Key(title: "123", role: .modeChange("123"), widthMultiplier: 1.45),
+                Key(title: "next", role: .keyboardSwitch, widthMultiplier: 1.25),
+                Key(title: "space", role: .space, widthMultiplier: 5.8),
+                Key(title: "return", role: .return, widthMultiplier: 1.9),
             ],
         ]
     }

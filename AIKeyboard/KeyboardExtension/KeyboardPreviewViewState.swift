@@ -1,16 +1,11 @@
 import UIKit
 
 struct KeyboardPreviewViewState {
-    struct SuggestionChip: Equatable {
-        let title: String
-    }
-
     let caption: String
     let previewText: NSAttributedString?
     let previewFallback: String?
     let expandedBody: String
     let diffSegments: [DiffSegment]
-    let chips: [SuggestionChip]
     let canExpand: Bool
     let canApply: Bool
     let applyBlockedReason: String?
@@ -23,10 +18,6 @@ struct KeyboardPreviewViewState {
                 previewFallback: "No confident correction yet",
                 expandedBody: "Typing stays untouched until the correction is conservative and clearly sentence-scoped.",
                 diffSegments: [],
-                chips: [
-                    SuggestionChip(title: "Keep typing"),
-                    SuggestionChip(title: "No change yet"),
-                ],
                 canExpand: false,
                 canApply: false,
                 applyBlockedReason: nil
@@ -46,10 +37,6 @@ struct KeyboardPreviewViewState {
             \(suggestion.corrected)
             """,
             diffSegments: analysis.diff.filter { $0.kind != .unchanged },
-            chips: [
-                SuggestionChip(title: analysis.activeSentence.text),
-                SuggestionChip(title: suggestion.corrected),
-            ],
             canExpand: true,
             canApply: canApply,
             applyBlockedReason: canApply
