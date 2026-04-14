@@ -65,6 +65,12 @@ public enum CorrectionRuntime {
         fallbackProvider: Fallback
     ) async -> CorrectionRuntimeResult {
         let (activeSentence, request) = CorrectionPipeline.makeRequest(for: context)
+        guard shouldAttemptRemoteCorrection(context: context, activeSentence: activeSentence) else {
+            return CorrectionRuntimeResult(
+                analysis: CorrectionPipeline.analyzeLocally(context: context),
+                source: .localOnly
+            )
+        }
 
         do {
             if let remoteSuggestion = try await remoteProvider.suggestCorrection(for: request) {
@@ -110,6 +116,18 @@ public enum CorrectionRuntime {
             source: .localFallback
         )
     }
+
+    static func shouldAttemptRemoteCorrection(
+        context: TextContext,
+        activeSentence: ActiveSentence
+    ) -> Bool {
+        let wordCount = activeSentence.text.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).count
+        guard wordCount >= 2 else {
+            return false
+        }
+
+        return !CorrectionPipeline.isCursorInsideWord(context: context)
+    }
 }
 
 public enum CorrectionRuntimeConfigurationLoader {
@@ -125,6 +143,10 @@ public enum CorrectionRuntimeConfigurationLoader {
         )?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let endpointString, !endpointString.isEmpty, let endpoint = URL(string: endpointString) else {
+            return nil
+        }
+
+        guard isAllowedRelayEndpoint(endpoint) else {
             return nil
         }
 
@@ -154,5 +176,21 @@ public enum CorrectionRuntimeConfigurationLoader {
         }
 
         return bundle.object(forInfoDictionaryKey: bundleKey) as? String
+    }
+
+    static func isAllowedRelayEndpoint(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), let host = url.host?.lowercased() else {
+            return false
+        }
+
+        if scheme == "https" {
+            return true
+        }
+
+        guard scheme == "http" else {
+            return false
+        }
+
+        return host == "localhost" || host == "127.0.0.1" || host == "::1"
     }
 }

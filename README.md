@@ -232,3 +232,6 @@ provide either:
 
 For keyboard-side relay use on iOS, the keyboard extension must also have Full
 Access enabled by the user.
+
+Relay endpoints should use HTTPS. Plain HTTP is only accepted for local
+development hosts such as `localhost` and `127.0.0.1`.

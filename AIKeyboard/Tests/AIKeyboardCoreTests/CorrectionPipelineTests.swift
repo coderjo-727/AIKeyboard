@@ -17,6 +17,13 @@ private struct StubCorrectionProvider: CorrectionProvider {
     }
 }
 
+private struct FailingCorrectionProvider: CorrectionProvider {
+    func suggestCorrection(for request: CorrectionProviderRequest) async throws -> CorrectionSuggestion? {
+        Issue.record("Remote provider should not have been called for ineligible context")
+        return nil
+    }
+}
+
 @Test
 func pipelineUsesProviderSuggestionAndBuildsDiff() async throws {
     let analysis = try await CorrectionPipeline.analyze(
@@ -109,4 +116,48 @@ func runtimeConfigurationLoadsRelayFromEnvironment() {
 
     #expect(configuration?.relay?.endpoint.absoluteString == "https://example.com/v1/corrections")
     #expect(configuration?.relay?.apiKey == "test-token")
+}
+
+@Test
+func runtimeConfigurationRejectsPlainHttpNonLocalRelay() {
+    let configuration = CorrectionRuntimeConfigurationLoader.load(
+        environment: [
+            "AIKEYBOARD_RELAY_ENDPOINT": "http://example.com/v1/corrections",
+            "AIKEYBOARD_RELAY_TOKEN": "test-token",
+        ]
+    )
+
+    #expect(configuration == nil)
+}
+
+@Test
+func runtimeConfigurationAllowsLocalDevelopmentHttpRelay() {
+    let configuration = CorrectionRuntimeConfigurationLoader.load(
+        environment: [
+            "AIKEYBOARD_RELAY_ENDPOINT": "http://127.0.0.1:8787/v1/corrections",
+        ]
+    )
+
+    #expect(configuration?.relay?.endpoint.absoluteString == "http://127.0.0.1:8787/v1/corrections")
+}
+
+@Test
+func runtimeSkipsRemoteForSingleWordFragments() async {
+    let result = await CorrectionRuntime.analyze(
+        context: TextContext(
+            beforeInput: "hello",
+            afterInput: ""
+        ),
+        remoteProvider: FailingCorrectionProvider(),
+        fallbackProvider: StubCorrectionProvider(
+            suggestion: CorrectionSuggestion(
+                original: "hello",
+                corrected: "Hello.",
+                confidence: 0.96
+            )
+        )
+    )
+
+    #expect(result.source == .localOnly)
+    #expect(result.analysis.suggestion == nil)
 }
