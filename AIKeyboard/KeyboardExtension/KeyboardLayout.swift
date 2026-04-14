@@ -45,20 +45,20 @@ struct KeyboardLayout {
             letterRow("a s d f g h j k l", uppercased: uppercased),
             [
                 Key(title: shiftTitle(for: shiftState), role: .shift, widthMultiplier: 1.35),
-                key("z", uppercased: uppercased),
-                key("x", uppercased: uppercased),
-                key("c", uppercased: uppercased),
-                key("v", uppercased: uppercased),
-                key("b", uppercased: uppercased),
-                key("n", uppercased: uppercased),
-                key("m", uppercased: uppercased),
+                key("z", uppercased: uppercased, widthMultiplier: 1.05),
+                key("x", uppercased: uppercased, widthMultiplier: 1.05),
+                key("c", uppercased: uppercased, widthMultiplier: 1.05),
+                key("v", uppercased: uppercased, widthMultiplier: 1.05),
+                key("b", uppercased: uppercased, widthMultiplier: 1.05),
+                key("n", uppercased: uppercased, widthMultiplier: 1.05),
+                key("m", uppercased: uppercased, widthMultiplier: 1.05),
                 Key(title: "⌫", role: .backspace, widthMultiplier: 1.35),
             ],
             [
                 Key(title: "123", role: .modeChange("123")),
                 Key(title: "next", role: .keyboardSwitch),
-                Key(title: "space", role: .space, widthMultiplier: 6.2),
-                Key(title: "return", role: .return, widthMultiplier: 1.65),
+                Key(title: "space", role: .space, widthMultiplier: 6.45),
+                Key(title: "return", role: .return, widthMultiplier: 1.6),
             ],
         ]
     }
@@ -80,9 +80,9 @@ struct KeyboardLayout {
             [
                 Key(title: "ABC", role: .modeChange("ABC")),
                 Key(title: "next", role: .keyboardSwitch),
-                Key(title: "space", role: .space, widthMultiplier: 5.4),
+                Key(title: "space", role: .space, widthMultiplier: 5.75),
                 Key(title: ".", role: .input("."), widthMultiplier: 1.15),
-                Key(title: "return", role: .return, widthMultiplier: 1.65),
+                Key(title: "return", role: .return, widthMultiplier: 1.6),
             ],
         ]
     }
@@ -95,9 +95,9 @@ struct KeyboardLayout {
         values.split(separator: " ").map { Key(title: String($0), role: .input(String($0))) }
     }
 
-    private func key(_ value: String, uppercased: Bool) -> Key {
+    private func key(_ value: String, uppercased: Bool, widthMultiplier: Double = 1.0) -> Key {
         let display = uppercased ? value.uppercased() : value.lowercased()
-        return Key(title: display, role: .input(value))
+        return Key(title: display, role: .input(value), widthMultiplier: widthMultiplier)
     }
 
     private func shiftTitle(for shiftState: KeyboardState.ShiftState) -> String {

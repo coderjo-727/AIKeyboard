@@ -16,6 +16,15 @@ func suggestsCommonSpellingAndContractionFixes() {
 }
 
 @Test
+func suggestsExpandedLocalTestRules() {
+    let spellingSuggestion = SimpleCorrectionEngine.suggestCorrection(for: "we leave becuase")
+    let phraseSuggestion = SimpleCorrectionEngine.suggestCorrection(for: "your welcome")
+
+    #expect(spellingSuggestion?.corrected == "We leave because.")
+    #expect(phraseSuggestion?.corrected == "You're welcome.")
+}
+
+@Test
 func suggestsFixForPersonalIntroSmokeTest() {
     let suggestion = SimpleCorrectionEngine.suggestCorrection(for: "my name es jym")
 

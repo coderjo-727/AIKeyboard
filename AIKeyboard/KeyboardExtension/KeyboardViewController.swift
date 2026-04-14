@@ -60,6 +60,7 @@ final class KeyboardViewController: UIInputViewController {
     private var keyboardState = KeyboardState()
     private let sessionMemory = KeyboardSessionMemory()
     private let layoutModel = KeyboardLayout.qwertyPrototype
+    private var refreshWorkItem: DispatchWorkItem?
     private var previewTask: Task<Void, Never>?
     private var previewRevision = 0
     private var proxyAdapter: KeyboardTextDocumentProxy {
@@ -82,11 +83,12 @@ final class KeyboardViewController: UIInputViewController {
 
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
-        refreshPreview()
+        schedulePreviewRefresh(after: 0.06)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        refreshWorkItem?.cancel()
         previewTask?.cancel()
         sessionMemory.reset()
     }
@@ -126,11 +128,11 @@ final class KeyboardViewController: UIInputViewController {
                 preferredCollapsedHeight: 308,
                 preferredExpandedHeight: 530,
                 expandedPanelHeight: 212,
-                keyHeight: 41,
-                rootSpacing: 8,
+                keyHeight: 43,
+                rootSpacing: 7,
                 keyboardSurfaceSpacing: 0,
-                keySpacing: 5,
-                rowSpacing: 8,
+                keySpacing: 4,
+                rowSpacing: 7,
                 previewHeight: 70
             )
         }
@@ -140,11 +142,11 @@ final class KeyboardViewController: UIInputViewController {
                 preferredCollapsedHeight: 342,
                 preferredExpandedHeight: 610,
                 expandedPanelHeight: 256,
-                keyHeight: 48,
-                rootSpacing: 10,
+                keyHeight: 50,
+                rootSpacing: 9,
                 keyboardSurfaceSpacing: 0,
-                keySpacing: 7,
-                rowSpacing: 10,
+                keySpacing: 6,
+                rowSpacing: 9,
                 previewHeight: 76
             )
         }
@@ -153,11 +155,11 @@ final class KeyboardViewController: UIInputViewController {
             preferredCollapsedHeight: 326,
             preferredExpandedHeight: 580,
             expandedPanelHeight: 236,
-            keyHeight: 46,
-            rootSpacing: 9,
+            keyHeight: 48,
+            rootSpacing: 8,
             keyboardSurfaceSpacing: 0,
-            keySpacing: 7,
-            rowSpacing: 9,
+            keySpacing: 6,
+            rowSpacing: 8,
             previewHeight: 74
         )
     }
@@ -399,7 +401,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func makeKeyButton(for key: KeyboardLayout.Key) -> UIButton {
-        let button = UIButton(type: .system)
+        let button = KeyboardKeyButton(type: .system)
         button.configuration = .filled()
         button.configuration?.baseBackgroundColor = backgroundColor(for: key.role)
         button.configuration?.baseForegroundColor = foregroundColor(for: key.role)
@@ -443,7 +445,18 @@ final class KeyboardViewController: UIInputViewController {
         return button
     }
 
+    private func schedulePreviewRefresh(after delay: TimeInterval) {
+        refreshWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.refreshPreview()
+        }
+        refreshWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
     private func refreshPreview() {
+        refreshWorkItem?.cancel()
         let context = KeyboardTextActionService.makeContext(for: proxyAdapter)
         let configuration = CorrectionRuntimeConfigurationLoader.load()
         let allowsRemote = hasFullAccess && configuration?.relay != nil
@@ -654,7 +667,7 @@ final class KeyboardViewController: UIInputViewController {
         if keyboardState != previousState {
             configureKeyboardRows(animated: false)
         }
-        refreshPreview()
+        schedulePreviewRefresh(after: 0.06)
     }
 
     private func displayTitle(for key: KeyboardLayout.Key) -> String {
@@ -806,5 +819,16 @@ final class KeyboardViewController: UIInputViewController {
                 }
             )
         }
+    }
+}
+
+private final class KeyboardKeyButton: UIButton {
+    private let minimumHitSide: CGFloat = 46
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let horizontalInset = min(0, (bounds.width - minimumHitSide) / 2)
+        let verticalInset = min(0, (bounds.height - minimumHitSide) / 2)
+        let hitFrame = bounds.insetBy(dx: horizontalInset, dy: verticalInset)
+        return hitFrame.contains(point)
     }
 }
