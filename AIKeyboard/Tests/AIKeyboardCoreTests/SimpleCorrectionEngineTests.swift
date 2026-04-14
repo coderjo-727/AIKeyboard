@@ -16,6 +16,13 @@ func suggestsCommonSpellingAndContractionFixes() {
 }
 
 @Test
+func suggestsFixForPersonalIntroSmokeTest() {
+    let suggestion = SimpleCorrectionEngine.suggestCorrection(for: "my name es jym")
+
+    #expect(suggestion?.corrected == "My name is Jim.")
+}
+
+@Test
 func preservesAlreadyAcceptableInformalSentence() {
     let suggestion = SimpleCorrectionEngine.suggestCorrection(for: "lol that was wild")
 

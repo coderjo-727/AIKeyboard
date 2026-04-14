@@ -22,7 +22,6 @@ final class KeyboardViewController: UIInputViewController {
             let keyboardSurfaceSpacing: CGFloat
             let keySpacing: CGFloat
             let rowSpacing: CGFloat
-            let helperMinimumHeight: CGFloat
             let chipHeight: CGFloat
         }
     }
@@ -47,16 +46,12 @@ final class KeyboardViewController: UIInputViewController {
     private let applyButton = UIButton(type: .system)
 
     private let keyboardSurface = UIStackView()
-    private let helperCard = UIView()
-    private let helperEyebrowLabel = UILabel()
-    private let helperLabel = UILabel()
     private let suggestionKeys = UIStackView()
     private let keyboardRowsStack = UIStackView()
 
     private var preferredHeightConstraint: NSLayoutConstraint?
     private var expandedHeightConstraint: NSLayoutConstraint?
     private var keyHeightConstraints: [NSLayoutConstraint] = []
-    private var helperMinimumHeightConstraint: NSLayoutConstraint?
     private var chipHeightConstraint: NSLayoutConstraint?
     private var latestAnalysis: CorrectionAnalysis?
     private var latestViewState = KeyboardPreviewViewState.make(from: nil)
@@ -74,7 +69,7 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureViewHierarchy()
-        configureKeyboardRows()
+        configureKeyboardRows(animated: false)
         updateAdaptiveLayout(animated: false)
         refreshPreview()
         applyInitialVisualState()
@@ -128,44 +123,41 @@ final class KeyboardViewController: UIInputViewController {
         let width = max(view.bounds.width, UIScreen.main.bounds.width)
         if width < 380 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 386,
-                preferredExpandedHeight: 486,
+                preferredCollapsedHeight: 316,
+                preferredExpandedHeight: 444,
                 expandedPanelHeight: 212,
                 keyHeight: 40,
-                rootSpacing: 8,
-                keyboardSurfaceSpacing: 8,
+                rootSpacing: 7,
+                keyboardSurfaceSpacing: 7,
                 keySpacing: 5,
                 rowSpacing: 6,
-                helperMinimumHeight: 54,
                 chipHeight: 30
             )
         }
 
         if width >= 430 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 424,
-                preferredExpandedHeight: 542,
+                preferredCollapsedHeight: 348,
+                preferredExpandedHeight: 498,
                 expandedPanelHeight: 256,
                 keyHeight: 46,
-                rootSpacing: 10,
-                keyboardSurfaceSpacing: 11,
+                rootSpacing: 8,
+                keyboardSurfaceSpacing: 8,
                 keySpacing: 8,
                 rowSpacing: 9,
-                helperMinimumHeight: 64,
                 chipHeight: 34
             )
         }
 
         return Layout.Metrics(
-            preferredCollapsedHeight: 406,
-            preferredExpandedHeight: 512,
+            preferredCollapsedHeight: 332,
+            preferredExpandedHeight: 468,
             expandedPanelHeight: 236,
             keyHeight: 44,
-            rootSpacing: 9,
-            keyboardSurfaceSpacing: 10,
+            rootSpacing: 8,
+            keyboardSurfaceSpacing: 8,
             keySpacing: 7,
             rowSpacing: 8,
-            helperMinimumHeight: 60,
             chipHeight: 32
         )
     }
@@ -176,7 +168,6 @@ final class KeyboardViewController: UIInputViewController {
             ? metrics.preferredExpandedHeight
             : metrics.preferredCollapsedHeight
         expandedHeightConstraint?.constant = isExpanded ? metrics.expandedPanelHeight : 0
-        helperMinimumHeightConstraint?.constant = metrics.helperMinimumHeight
         chipHeightConstraint?.constant = metrics.chipHeight
         rootStack.spacing = metrics.rootSpacing
         keyboardSurface.spacing = metrics.keyboardSurfaceSpacing
@@ -339,15 +330,6 @@ final class KeyboardViewController: UIInputViewController {
         keyboardSurface.spacing = currentMetrics.keyboardSurfaceSpacing
         keyboardSurface.distribution = .fill
 
-        helperEyebrowLabel.font = .systemFont(ofSize: 11, weight: .semibold)
-        helperEyebrowLabel.textColor = Layout.tint
-        helperEyebrowLabel.text = "LIGHTWEIGHT REVIEW"
-
-        helperLabel.font = .systemFont(ofSize: 13, weight: .medium)
-        helperLabel.textColor = Layout.mutedForeground
-        helperLabel.numberOfLines = 2
-        helperLabel.text = "Preview stays visible while typing. Open review only when you want the full change list."
-
         suggestionKeys.axis = .horizontal
         suggestionKeys.spacing = 8
         suggestionKeys.distribution = .fillEqually
@@ -356,35 +338,14 @@ final class KeyboardViewController: UIInputViewController {
         keyboardRowsStack.spacing = currentMetrics.rowSpacing
         keyboardRowsStack.distribution = .fill
 
-        helperCard.backgroundColor = Layout.panel
-        helperCard.layer.cornerRadius = 18
-        helperCard.translatesAutoresizingMaskIntoConstraints = false
-        applyCardStyle(to: helperCard, shadowOpacity: 0.08)
-        helperEyebrowLabel.translatesAutoresizingMaskIntoConstraints = false
-        helperLabel.translatesAutoresizingMaskIntoConstraints = false
-        helperCard.addSubview(helperEyebrowLabel)
-        helperCard.addSubview(helperLabel)
-
-        NSLayoutConstraint.activate([
-            helperEyebrowLabel.topAnchor.constraint(equalTo: helperCard.topAnchor, constant: 12),
-            helperEyebrowLabel.leadingAnchor.constraint(equalTo: helperCard.leadingAnchor, constant: 14),
-            helperEyebrowLabel.trailingAnchor.constraint(equalTo: helperCard.trailingAnchor, constant: -14),
-            helperLabel.topAnchor.constraint(equalTo: helperEyebrowLabel.bottomAnchor, constant: 6),
-            helperLabel.leadingAnchor.constraint(equalTo: helperCard.leadingAnchor, constant: 14),
-            helperLabel.trailingAnchor.constraint(equalTo: helperCard.trailingAnchor, constant: -14),
-            helperLabel.bottomAnchor.constraint(equalTo: helperCard.bottomAnchor, constant: -12),
-        ])
-        helperMinimumHeightConstraint = helperCard.heightAnchor.constraint(greaterThanOrEqualToConstant: currentMetrics.helperMinimumHeight)
-        helperMinimumHeightConstraint?.isActive = true
         chipHeightConstraint = suggestionKeys.heightAnchor.constraint(equalToConstant: currentMetrics.chipHeight)
         chipHeightConstraint?.isActive = true
 
-        keyboardSurface.addArrangedSubview(helperCard)
         keyboardSurface.addArrangedSubview(suggestionKeys)
         keyboardSurface.addArrangedSubview(keyboardRowsStack)
     }
 
-    private func configureKeyboardRows() {
+    private func configureKeyboardRows(animated: Bool) {
         keyHeightConstraints.removeAll()
         keyboardRowsStack.arrangedSubviews.forEach { view in
             keyboardRowsStack.removeArrangedSubview(view)
@@ -412,7 +373,9 @@ final class KeyboardViewController: UIInputViewController {
             keyboardRowsStack.addArrangedSubview(stack)
         }
 
-        animateKeyboardRows()
+        if animated {
+            animateKeyboardRows()
+        }
     }
 
     private func makeKeyButton(for key: KeyboardLayout.Key) -> UIButton {
@@ -510,8 +473,6 @@ final class KeyboardViewController: UIInputViewController {
         applyButton.isEnabled = viewState.canApply
         expandButton.isEnabled = viewState.canExpand
         expandButton.setTitle(isExpanded ? "Close" : "Review", for: .normal)
-        helperEyebrowLabel.text = viewState.canExpand ? "READY TO REVIEW" : "LIGHTWEIGHT REVIEW"
-        helperLabel.text = helperText(canExpand: viewState.canExpand)
         renderDiffSegments(viewState.diffSegments)
         renderSuggestionRow(with: viewState)
     }
@@ -534,25 +495,6 @@ final class KeyboardViewController: UIInputViewController {
             return prefix + (hasFullAccess
                 ? " Local correction path is active."
                 : " Enable Full Access to allow relay-backed corrections.")
-        }
-    }
-
-    private func helperText(canExpand: Bool) -> String {
-        let base = canExpand
-            ? "A conservative suggestion is ready. Review it inline or keep typing."
-            : "Preview stays visible while typing. Open review only when you want the full change list."
-
-        if !hasFullAccess {
-            return base + " Full Access is still off, so this session stays fully local."
-        }
-
-        switch latestRuntimeSource {
-        case .relay:
-            return base + " Relay quality is active for this pass."
-        case .localFallback:
-            return base + " The network path fell back cleanly to the local engine."
-        case .localOnly:
-            return base
         }
     }
 
@@ -630,7 +572,6 @@ final class KeyboardViewController: UIInputViewController {
         isExpanded = expanded
         updateAdaptiveLayout(animated: false)
         keyboardSurface.alpha = expanded ? 0.16 : 1.0
-        helperCard.alpha = expanded ? 0.5 : 1.0
         keyboardSurface.isUserInteractionEnabled = !expanded
         previewContainer.transform = expanded
             ? CGAffineTransform(scaleX: 0.985, y: 0.985).translatedBy(x: 0, y: -2)
@@ -699,8 +640,11 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         KeyboardTextActionService.handleKeyTap(role: role, state: keyboardState, using: proxyAdapter)
+        let previousState = keyboardState
         keyboardState.handleTap(for: role)
-        configureKeyboardRows()
+        if keyboardState != previousState {
+            configureKeyboardRows(animated: false)
+        }
         refreshPreview()
     }
 
