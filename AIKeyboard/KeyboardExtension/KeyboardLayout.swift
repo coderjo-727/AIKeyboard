@@ -55,10 +55,10 @@ struct KeyboardLayout {
                 Key(title: "⌫", role: .backspace, widthMultiplier: 1.35),
             ],
             [
-                Key(title: "123", role: .modeChange("123"), widthMultiplier: 1.45),
-                Key(title: "next", role: .keyboardSwitch, widthMultiplier: 1.25),
-                Key(title: "space", role: .space, widthMultiplier: 5.8),
-                Key(title: "return", role: .return, widthMultiplier: 1.9),
+                Key(title: "123", role: .modeChange("123")),
+                Key(title: "next", role: .keyboardSwitch),
+                Key(title: "space", role: .space, widthMultiplier: 6.2),
+                Key(title: "return", role: .return, widthMultiplier: 1.65),
             ],
         ]
     }
@@ -78,11 +78,11 @@ struct KeyboardLayout {
                 Key(title: "⌫", role: .backspace, widthMultiplier: 1.35),
             ],
             [
-                Key(title: "ABC", role: .modeChange("ABC"), widthMultiplier: 1.3),
+                Key(title: "ABC", role: .modeChange("ABC")),
                 Key(title: "next", role: .keyboardSwitch),
-                Key(title: "space", role: .space, widthMultiplier: 4.6),
-                Key(title: ".", role: .input(".")),
-                Key(title: "return", role: .return, widthMultiplier: 1.5),
+                Key(title: "space", role: .space, widthMultiplier: 5.4),
+                Key(title: ".", role: .input("."), widthMultiplier: 1.15),
+                Key(title: "return", role: .return, widthMultiplier: 1.65),
             ],
         ]
     }
@@ -103,11 +103,11 @@ struct KeyboardLayout {
     private func shiftTitle(for shiftState: KeyboardState.ShiftState) -> String {
         switch shiftState {
         case .lowered:
-            return "shift"
+            return "shift.off"
         case .raised:
-            return "shift^"
+            return "shift.on"
         case .capsLocked:
-            return "caps"
+            return "caps.on"
         }
     }
 }

@@ -123,10 +123,10 @@ final class KeyboardViewController: UIInputViewController {
         let width = max(view.bounds.width, UIScreen.main.bounds.width)
         if width < 380 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 286,
-                preferredExpandedHeight: 444,
+                preferredCollapsedHeight: 308,
+                preferredExpandedHeight: 530,
                 expandedPanelHeight: 212,
-                keyHeight: 36,
+                keyHeight: 41,
                 rootSpacing: 8,
                 keyboardSurfaceSpacing: 0,
                 keySpacing: 5,
@@ -137,10 +137,10 @@ final class KeyboardViewController: UIInputViewController {
 
         if width >= 430 {
             return Layout.Metrics(
-                preferredCollapsedHeight: 318,
-                preferredExpandedHeight: 498,
+                preferredCollapsedHeight: 342,
+                preferredExpandedHeight: 610,
                 expandedPanelHeight: 256,
-                keyHeight: 42,
+                keyHeight: 48,
                 rootSpacing: 10,
                 keyboardSurfaceSpacing: 0,
                 keySpacing: 7,
@@ -150,10 +150,10 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         return Layout.Metrics(
-            preferredCollapsedHeight: 302,
-            preferredExpandedHeight: 468,
+            preferredCollapsedHeight: 326,
+            preferredExpandedHeight: 580,
             expandedPanelHeight: 236,
-            keyHeight: 40,
+            keyHeight: 46,
             rootSpacing: 9,
             keyboardSurfaceSpacing: 0,
             keySpacing: 7,
@@ -369,16 +369,25 @@ final class KeyboardViewController: UIInputViewController {
             stack.spacing = currentMetrics.keySpacing
             stack.alignment = .fill
             stack.distribution = .fill
+            var rowButtons: [(button: UIButton, key: KeyboardLayout.Key)] = []
 
             for key in row {
                 let button = makeKeyButton(for: key)
                 stack.addArrangedSubview(button)
-                let widthConstraint = button.widthAnchor.constraint(
-                    equalTo: stack.heightAnchor,
-                    multiplier: key.widthMultiplier
-                )
-                widthConstraint.priority = .defaultHigh
-                widthConstraint.isActive = true
+                rowButtons.append((button, key))
+            }
+
+            if let baseButton = rowButtons.first?.button,
+               let baseMultiplier = rowButtons.first?.key.widthMultiplier,
+               baseMultiplier > 0 {
+                for item in rowButtons.dropFirst() {
+                    let widthConstraint = item.button.widthAnchor.constraint(
+                        equalTo: baseButton.widthAnchor,
+                        multiplier: item.key.widthMultiplier / baseMultiplier
+                    )
+                    widthConstraint.priority = .required
+                    widthConstraint.isActive = true
+                }
             }
 
             keyboardRowsStack.addArrangedSubview(stack)
@@ -396,7 +405,15 @@ final class KeyboardViewController: UIInputViewController {
         button.configuration?.baseForegroundColor = foregroundColor(for: key.role)
         button.configuration?.cornerStyle = .medium
         button.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4)
-        button.setTitle(displayTitle(for: key), for: .normal)
+        if let symbol = symbolName(for: key) {
+            let configuration = UIImage.SymbolConfiguration(pointSize: symbolPointSize(for: key.role), weight: .semibold)
+            button.setImage(UIImage(systemName: symbol, withConfiguration: configuration), for: .normal)
+            button.setTitle(nil, for: .normal)
+            button.configuration?.imagePadding = 0
+        } else {
+            button.setImage(nil, for: .normal)
+            button.setTitle(displayTitle(for: key), for: .normal)
+        }
         button.titleLabel?.font = font(for: key.role)
         button.layer.shadowColor = Layout.shadow.cgColor
         button.layer.shadowOpacity = 0.08
@@ -643,9 +660,38 @@ final class KeyboardViewController: UIInputViewController {
     private func displayTitle(for key: KeyboardLayout.Key) -> String {
         switch key.role {
         case .keyboardSwitch:
-            return "◎"
+            return ""
+        case .return:
+            return "↵"
+        case .shift:
+            return ""
         default:
             return key.title
+        }
+    }
+
+    private func symbolName(for key: KeyboardLayout.Key) -> String? {
+        switch key.role {
+        case .shift:
+            if key.title == "caps.on" {
+                return "capslock.fill"
+            }
+            return key.title == "shift.off" ? "shift" : "shift.fill"
+        case .keyboardSwitch:
+            return "globe"
+        default:
+            return nil
+        }
+    }
+
+    private func symbolPointSize(for role: KeyboardLayout.Key.Role) -> CGFloat {
+        switch role {
+        case .shift, .return:
+            return 18
+        case .keyboardSwitch:
+            return 17
+        default:
+            return 16
         }
     }
 
@@ -680,7 +726,9 @@ final class KeyboardViewController: UIInputViewController {
 
     private func font(for role: KeyboardLayout.Key.Role) -> UIFont {
         switch role {
-        case .space, .modeChange, .keyboardSwitch, .return, .shift:
+        case .return:
+            return .systemFont(ofSize: 20, weight: .semibold)
+        case .space, .modeChange, .keyboardSwitch, .shift:
             return .systemFont(ofSize: 12, weight: .semibold)
         default:
             return .systemFont(ofSize: 20, weight: .medium)
