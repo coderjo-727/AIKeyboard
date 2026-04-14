@@ -56,7 +56,7 @@ struct KeyboardLayout {
             ],
             [
                 Key(title: "123", role: .modeChange("123"), widthMultiplier: 1.3),
-                Key(title: "globe", role: .keyboardSwitch),
+                Key(title: "next", role: .keyboardSwitch),
                 Key(title: "space", role: .space, widthMultiplier: 4.6),
                 Key(title: ".", role: .input(".")),
                 Key(title: "return", role: .return, widthMultiplier: 1.5),
@@ -80,7 +80,7 @@ struct KeyboardLayout {
             ],
             [
                 Key(title: "ABC", role: .modeChange("ABC"), widthMultiplier: 1.3),
-                Key(title: "globe", role: .keyboardSwitch),
+                Key(title: "next", role: .keyboardSwitch),
                 Key(title: "space", role: .space, widthMultiplier: 4.6),
                 Key(title: ".", role: .input(".")),
                 Key(title: "return", role: .return, widthMultiplier: 1.5),

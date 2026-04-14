@@ -12,8 +12,22 @@ final class KeyboardViewController: UIInputViewController {
         static let keyForeground = UIColor(red: 0.12, green: 0.15, blue: 0.13, alpha: 1.0)
         static let mutedForeground = UIColor(red: 0.38, green: 0.42, blue: 0.39, alpha: 1.0)
         static let shadow = UIColor(red: 0.08, green: 0.12, blue: 0.09, alpha: 0.08)
+
+        struct Metrics {
+            let preferredCollapsedHeight: CGFloat
+            let preferredExpandedHeight: CGFloat
+            let expandedPanelHeight: CGFloat
+            let keyHeight: CGFloat
+            let rootSpacing: CGFloat
+            let keyboardSurfaceSpacing: CGFloat
+            let keySpacing: CGFloat
+            let rowSpacing: CGFloat
+            let helperMinimumHeight: CGFloat
+            let chipHeight: CGFloat
+        }
     }
 
+    private let rootStack = UIStackView()
     private let previewContainer = UIView()
     private let previewLabel = UILabel()
     private let previewCaptionLabel = UILabel()
@@ -25,6 +39,8 @@ final class KeyboardViewController: UIInputViewController {
     private let expandedHandle = UIView()
     private let expandedTitleLabel = UILabel()
     private let expandedBodyLabel = UILabel()
+    private let expandedScrollView = UIScrollView()
+    private let expandedScrollableStack = UIStackView()
     private let diffStackView = UIStackView()
     private let dismissButton = UIButton(type: .system)
     private let rejectButton = UIButton(type: .system)
@@ -37,7 +53,11 @@ final class KeyboardViewController: UIInputViewController {
     private let suggestionKeys = UIStackView()
     private let keyboardRowsStack = UIStackView()
 
+    private var preferredHeightConstraint: NSLayoutConstraint?
     private var expandedHeightConstraint: NSLayoutConstraint?
+    private var keyHeightConstraints: [NSLayoutConstraint] = []
+    private var helperMinimumHeightConstraint: NSLayoutConstraint?
+    private var chipHeightConstraint: NSLayoutConstraint?
     private var latestAnalysis: CorrectionAnalysis?
     private var latestViewState = KeyboardPreviewViewState.make(from: nil)
     private var latestRuntimeSource: CorrectionRuntimeResult.Source = .localOnly
@@ -55,8 +75,14 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         configureViewHierarchy()
         configureKeyboardRows()
+        updateAdaptiveLayout(animated: false)
         refreshPreview()
         applyInitialVisualState()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateAdaptiveLayout(animated: false)
     }
 
     override func textDidChange(_ textInput: UITextInput?) {
@@ -72,20 +98,23 @@ final class KeyboardViewController: UIInputViewController {
 
     private func configureViewHierarchy() {
         view.backgroundColor = Layout.surface
+        let metrics = currentMetrics
 
         configurePreviewBar()
         configureExpandedPanel()
         configureKeyboardSurface()
 
-        let rootStack = UIStackView(arrangedSubviews: [
-            previewContainer,
-            expandedPanel,
-            keyboardSurface,
-        ])
+        rootStack.addArrangedSubview(previewContainer)
+        rootStack.addArrangedSubview(expandedPanel)
+        rootStack.addArrangedSubview(keyboardSurface)
         rootStack.axis = .vertical
-        rootStack.spacing = 10
+        rootStack.spacing = metrics.rootSpacing
         rootStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(rootStack)
+
+        preferredHeightConstraint = view.heightAnchor.constraint(equalToConstant: metrics.preferredCollapsedHeight)
+        preferredHeightConstraint?.priority = .defaultHigh
+        preferredHeightConstraint?.isActive = true
 
         NSLayoutConstraint.activate([
             rootStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
@@ -93,6 +122,79 @@ final class KeyboardViewController: UIInputViewController {
             rootStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
         ])
+    }
+
+    private var currentMetrics: Layout.Metrics {
+        let width = max(view.bounds.width, UIScreen.main.bounds.width)
+        if width < 380 {
+            return Layout.Metrics(
+                preferredCollapsedHeight: 386,
+                preferredExpandedHeight: 486,
+                expandedPanelHeight: 212,
+                keyHeight: 40,
+                rootSpacing: 8,
+                keyboardSurfaceSpacing: 8,
+                keySpacing: 5,
+                rowSpacing: 6,
+                helperMinimumHeight: 54,
+                chipHeight: 30
+            )
+        }
+
+        if width >= 430 {
+            return Layout.Metrics(
+                preferredCollapsedHeight: 424,
+                preferredExpandedHeight: 542,
+                expandedPanelHeight: 256,
+                keyHeight: 46,
+                rootSpacing: 10,
+                keyboardSurfaceSpacing: 11,
+                keySpacing: 8,
+                rowSpacing: 9,
+                helperMinimumHeight: 64,
+                chipHeight: 34
+            )
+        }
+
+        return Layout.Metrics(
+            preferredCollapsedHeight: 406,
+            preferredExpandedHeight: 512,
+            expandedPanelHeight: 236,
+            keyHeight: 44,
+            rootSpacing: 9,
+            keyboardSurfaceSpacing: 10,
+            keySpacing: 7,
+            rowSpacing: 8,
+            helperMinimumHeight: 60,
+            chipHeight: 32
+        )
+    }
+
+    private func updateAdaptiveLayout(animated: Bool) {
+        let metrics = currentMetrics
+        preferredHeightConstraint?.constant = isExpanded
+            ? metrics.preferredExpandedHeight
+            : metrics.preferredCollapsedHeight
+        expandedHeightConstraint?.constant = isExpanded ? metrics.expandedPanelHeight : 0
+        helperMinimumHeightConstraint?.constant = metrics.helperMinimumHeight
+        chipHeightConstraint?.constant = metrics.chipHeight
+        rootStack.spacing = metrics.rootSpacing
+        keyboardSurface.spacing = metrics.keyboardSurfaceSpacing
+        suggestionKeys.spacing = metrics.keySpacing
+        keyboardRowsStack.spacing = metrics.rowSpacing
+
+        for row in keyboardRowsStack.arrangedSubviews.compactMap({ $0 as? UIStackView }) {
+            row.spacing = metrics.keySpacing
+        }
+
+        for constraint in keyHeightConstraints {
+            constraint.constant = metrics.keyHeight
+        }
+
+        if animated {
+            let changes = { self.view.layoutIfNeeded() }
+            UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseInOut], animations: changes)
+        }
     }
 
     private func configurePreviewBar() {
@@ -168,6 +270,17 @@ final class KeyboardViewController: UIInputViewController {
         diffStackView.axis = .vertical
         diffStackView.spacing = 10
 
+        expandedScrollView.showsVerticalScrollIndicator = true
+        expandedScrollView.alwaysBounceVertical = false
+        expandedScrollView.delaysContentTouches = false
+
+        expandedScrollableStack.axis = .vertical
+        expandedScrollableStack.spacing = 12
+        expandedScrollableStack.translatesAutoresizingMaskIntoConstraints = false
+        expandedScrollableStack.addArrangedSubview(expandedBodyLabel)
+        expandedScrollableStack.addArrangedSubview(diffStackView)
+        expandedScrollView.addSubview(expandedScrollableStack)
+
         dismissButton.configuration = .plain()
         dismissButton.setTitle("Not Now", for: .normal)
         dismissButton.tintColor = Layout.mutedForeground
@@ -194,8 +307,7 @@ final class KeyboardViewController: UIInputViewController {
         let contentStack = UIStackView(arrangedSubviews: [
             expandedHandle,
             expandedTitleLabel,
-            expandedBodyLabel,
-            diffStackView,
+            expandedScrollView,
             actionRow,
         ])
         contentStack.axis = .vertical
@@ -210,6 +322,11 @@ final class KeyboardViewController: UIInputViewController {
             contentStack.bottomAnchor.constraint(equalTo: expandedPanel.bottomAnchor, constant: -16),
             expandedHandle.widthAnchor.constraint(equalToConstant: 42),
             expandedHandle.heightAnchor.constraint(equalToConstant: 4),
+            expandedScrollableStack.topAnchor.constraint(equalTo: expandedScrollView.contentLayoutGuide.topAnchor),
+            expandedScrollableStack.leadingAnchor.constraint(equalTo: expandedScrollView.contentLayoutGuide.leadingAnchor),
+            expandedScrollableStack.trailingAnchor.constraint(equalTo: expandedScrollView.contentLayoutGuide.trailingAnchor),
+            expandedScrollableStack.bottomAnchor.constraint(equalTo: expandedScrollView.contentLayoutGuide.bottomAnchor),
+            expandedScrollableStack.widthAnchor.constraint(equalTo: expandedScrollView.frameLayoutGuide.widthAnchor),
         ])
 
         expandedHeightConstraint = expandedPanel.heightAnchor.constraint(equalToConstant: 0)
@@ -219,8 +336,8 @@ final class KeyboardViewController: UIInputViewController {
 
     private func configureKeyboardSurface() {
         keyboardSurface.axis = .vertical
-        keyboardSurface.spacing = 12
-        keyboardSurface.distribution = .fillEqually
+        keyboardSurface.spacing = currentMetrics.keyboardSurfaceSpacing
+        keyboardSurface.distribution = .fill
 
         helperEyebrowLabel.font = .systemFont(ofSize: 11, weight: .semibold)
         helperEyebrowLabel.textColor = Layout.tint
@@ -236,8 +353,8 @@ final class KeyboardViewController: UIInputViewController {
         suggestionKeys.distribution = .fillEqually
 
         keyboardRowsStack.axis = .vertical
-        keyboardRowsStack.spacing = 10
-        keyboardRowsStack.distribution = .fillEqually
+        keyboardRowsStack.spacing = currentMetrics.rowSpacing
+        keyboardRowsStack.distribution = .fill
 
         helperCard.backgroundColor = Layout.panel
         helperCard.layer.cornerRadius = 18
@@ -257,6 +374,10 @@ final class KeyboardViewController: UIInputViewController {
             helperLabel.trailingAnchor.constraint(equalTo: helperCard.trailingAnchor, constant: -14),
             helperLabel.bottomAnchor.constraint(equalTo: helperCard.bottomAnchor, constant: -12),
         ])
+        helperMinimumHeightConstraint = helperCard.heightAnchor.constraint(greaterThanOrEqualToConstant: currentMetrics.helperMinimumHeight)
+        helperMinimumHeightConstraint?.isActive = true
+        chipHeightConstraint = suggestionKeys.heightAnchor.constraint(equalToConstant: currentMetrics.chipHeight)
+        chipHeightConstraint?.isActive = true
 
         keyboardSurface.addArrangedSubview(helperCard)
         keyboardSurface.addArrangedSubview(suggestionKeys)
@@ -264,6 +385,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func configureKeyboardRows() {
+        keyHeightConstraints.removeAll()
         keyboardRowsStack.arrangedSubviews.forEach { view in
             keyboardRowsStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -272,7 +394,7 @@ final class KeyboardViewController: UIInputViewController {
         for row in layoutModel.resolvedRows(for: keyboardState) {
             let stack = UIStackView()
             stack.axis = .horizontal
-            stack.spacing = 8
+            stack.spacing = currentMetrics.keySpacing
             stack.alignment = .fill
             stack.distribution = .fill
 
@@ -306,7 +428,9 @@ final class KeyboardViewController: UIInputViewController {
         button.layer.shadowRadius = 8
         button.layer.shadowOffset = CGSize(width: 0, height: 4)
         button.layer.masksToBounds = false
-        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        let heightConstraint = button.heightAnchor.constraint(equalToConstant: currentMetrics.keyHeight)
+        heightConstraint.isActive = true
+        keyHeightConstraints.append(heightConstraint)
         button.configurationUpdateHandler = { [weak self] updatedButton in
             guard let self else { return }
             var background = self.backgroundColor(for: key.role)
@@ -493,7 +617,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private func setExpanded(_ expanded: Bool, animated: Bool) {
         isExpanded = expanded
-        expandedHeightConstraint?.constant = expanded ? 252 : 0
+        updateAdaptiveLayout(animated: false)
         keyboardSurface.alpha = expanded ? 0.16 : 1.0
         helperCard.alpha = expanded ? 0.5 : 1.0
         keyboardSurface.isUserInteractionEnabled = !expanded
@@ -572,7 +696,7 @@ final class KeyboardViewController: UIInputViewController {
     private func displayTitle(for key: KeyboardLayout.Key) -> String {
         switch key.role {
         case .keyboardSwitch:
-            return "globe"
+            return "next"
         default:
             return key.title
         }
