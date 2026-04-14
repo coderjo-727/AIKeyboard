@@ -144,6 +144,8 @@ unique reverse-DNS value for both targets.
 
 The container app is the installation, runtime status, and privacy shell. The
 custom keyboard experience lives in the extension target embedded inside it.
+The app also includes a status / troubleshooting section and a personal testing
+checklist for device validation.
 
 ## Enable The Keyboard On iOS
 

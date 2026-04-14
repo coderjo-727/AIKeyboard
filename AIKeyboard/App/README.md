@@ -11,3 +11,4 @@ Current responsibilities:
 - Settings that do not store user text
 - Privacy messaging and product education
 - Relay/local runtime status
+- Troubleshooting and personal testing checklist

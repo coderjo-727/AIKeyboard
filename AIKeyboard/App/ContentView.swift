@@ -13,7 +13,9 @@ struct ContentView: View {
                     heroCard
                     runtimeCard
                     setupCard
+                    diagnosticsCard
                     privacyCard
+                    testingCard
                     liveCorrectionCard
                 }
                 .padding(22)
@@ -102,6 +104,37 @@ struct ContentView: View {
         }
     }
 
+    private var diagnosticsCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Status & Troubleshooting")
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.ink)
+
+                diagnosticRow(
+                    label: "Relay endpoint",
+                    value: state.relayEndpointDisplay,
+                    tone: state.hasRelayConfiguration ? .good : .warning
+                )
+                diagnosticRow(
+                    label: "Keyboard network access",
+                    value: "Enable Full Access in iOS Keyboard settings to allow relay-backed corrections.",
+                    tone: .neutral
+                )
+                diagnosticRow(
+                    label: "Fallback behavior",
+                    value: "If the relay is missing or unreachable, suggestions stay local and conservative.",
+                    tone: .good
+                )
+                diagnosticRow(
+                    label: "Secrets",
+                    value: "OpenAI API keys belong on the relay server only. The app stores no raw text profile.",
+                    tone: .good
+                )
+            }
+        }
+    }
+
     private var privacyCard: some View {
         card {
             VStack(alignment: .leading, spacing: 12) {
@@ -113,6 +146,22 @@ struct ContentView: View {
                 featureRow("Accept and reject memory resets with the keyboard session.")
                 featureRow("If relay is unavailable, the built-in local provider keeps working.")
                 featureRow("The OpenAI key belongs on the relay server, never in the app.")
+            }
+        }
+    }
+
+    private var testingCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Personal Test Checklist")
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.ink)
+
+                checklistRow("Type normally and confirm letters do not auto-space.")
+                checklistRow("Double-tap space after a word and confirm it becomes period + space.")
+                checklistRow("Try `i has a apple` and confirm preview appears only when the suggestion is conservative.")
+                checklistRow("Use Not Now, Hide This Session, and Apply from the review panel.")
+                checklistRow("Disable the relay or network and confirm the keyboard keeps working locally.")
             }
         }
     }
@@ -238,6 +287,36 @@ struct ContentView: View {
         }
     }
 
+    private func checklistRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(AppTheme.accent)
+            Text(text)
+                .foregroundStyle(AppTheme.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func diagnosticRow(label: String, value: String, tone: DiagnosticTone) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Circle()
+                .fill(tone.color)
+                .frame(width: 10, height: 10)
+                .padding(.top, 5)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(label)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(AppTheme.secondaryText)
+                Text(value)
+                    .foregroundStyle(AppTheme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 16))
+    }
+
     private func labeledText(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
@@ -276,7 +355,7 @@ struct ContentView: View {
         state = CorrectionExperienceState(
             analysis: result.analysis,
             source: result.source,
-            hasRelayConfiguration: configuration?.relay != nil
+            relayConfiguration: configuration?.relay
         )
     }
 }
@@ -284,7 +363,11 @@ struct ContentView: View {
 private struct CorrectionExperienceState {
     let analysis: CorrectionAnalysis
     let source: CorrectionRuntimeResult.Source
-    let hasRelayConfiguration: Bool
+    let relayConfiguration: CorrectionRuntimeConfiguration.Relay?
+
+    var hasRelayConfiguration: Bool {
+        relayConfiguration != nil
+    }
 
     static let loading = CorrectionExperienceState(
         analysis: CorrectionPipeline.analyzeLocally(
@@ -294,7 +377,7 @@ private struct CorrectionExperienceState {
             )
         ),
         source: .localOnly,
-        hasRelayConfiguration: false
+        relayConfiguration: nil
     )
 
     var runtimeHeadline: String {
@@ -343,6 +426,33 @@ private struct CorrectionExperienceState {
             "Add AIKeyboardRelayEndpoint to the app Info.plist or set AIKEYBOARD_RELAY_ENDPOINT in the scheme environment.",
             "If your relay expects auth, also provide AIKeyboardRelayToken or AIKEYBOARD_RELAY_TOKEN."
         ]
+    }
+
+    var relayEndpointDisplay: String {
+        guard let endpoint = relayConfiguration?.endpoint else {
+            return "Not configured. Local correction is active."
+        }
+
+        let host = endpoint.host ?? "unknown host"
+        let scheme = endpoint.scheme?.uppercased() ?? "unknown"
+        return "\(scheme) relay configured at \(host)"
+    }
+}
+
+private enum DiagnosticTone {
+    case good
+    case warning
+    case neutral
+
+    var color: Color {
+        switch self {
+        case .good:
+            return AppTheme.success
+        case .warning:
+            return AppTheme.warning
+        case .neutral:
+            return AppTheme.accent
+        }
     }
 }
 
